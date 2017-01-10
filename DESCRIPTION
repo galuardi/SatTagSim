@@ -1,0 +1,39 @@
+Package: SatTagSim
+Type: Package
+Title: Simulation from Electronic Tags
+Version: 0.1
+Date: 2017-1-04
+Author: Benjamin Galuardi
+Maintainer: <bgaluardi@umassd.edu>
+Description: Simulation from Kalman filtered electronic tag results to produce
+    transition matrices between discrete spatial areas.
+License: GPL-3
+Depends:
+    MASS,
+    fields,
+    plyr,
+    raster,
+    truncnorm,
+    date,
+    parallel,
+    doParallel,
+    foreach,
+    matlab,
+    Gmisc,
+    ggplot2,
+    reshape2,
+    rworldmap
+Suggests:
+    analyzepsat,
+    rgdal,
+    RODBC,
+    snowfall,
+    knitr,
+    fields,
+    crawl,
+    kftrack
+NeedsCompilation: no
+ByteCompile: yes
+LazyData: TRUE
+RoxygenNote: 5.0.0
+#VignetteBuilder: knitr
