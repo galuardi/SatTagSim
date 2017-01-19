@@ -1,0 +1,105 @@
+---
+title: "Movement matrix goodness of fit"
+author: "Benjamin Galuardi"
+date: '`r Sys.Date()`'
+output: pdf_document
+---
+
+```{r, echo = F, eval = T, message = F, warning  = F}
+library(SatTagSim)
+
+username =  as.character(Sys.info()[7])
+setwd(paste0('C:/Users/', username,'/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/'))
+datadir = 'D:/SKYDRIVE_BACKUP/PHD_SIMS/SCRS_SIMS'
+
+mycol = colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"), space = "Lab")
+load('sim_comparison_models.Rdata')
+```
+
+### functions for multinomial variance. 
+Here, we consider each row a multinomial
+```{r, echo = T, eval = T }
+get.mvar = function(x){
+  p = drop(x) # use the percentages
+  v = p*(1-p)
+  # c = outer(p, 1-p)
+  # vcv = diag(c)
+  v
+}
+
+get.mvar.samp = function(vmu, vsd) {
+  o = rtruncnorm(1, mean = vmu, sd = vsd, a = 0, 1)
+  o[is.nan(o)] = 0
+  o
+}
+
+# example for seasonal transition matrices
+vmat = lapply(watl.big, function(x) apply(x, 1, get.mvar))
+
+```
+
+
+### Plot the variance for each cell, each season (colorbar)
+### Overlay with original movement matrix values
+
+```{r, eval = T, echo = F, fig.width = 9, fig.height=9, warning = F, message = F, comment=F, results = 'hide'}
+ex7 = expand.grid(1:7, 1:7)
+
+par(mfrow=c(2,2))
+sapply(1:4, function(x) {
+  image.plot(1:7, 1:7, vmat[[x]], col = mycol(49), xlab = '', ylab = '')
+  text(ex7[,1], ex7[,2], round(as.vector(watl.big[[x]]),3), font = 2)
+  title(names(watl.big)[x])
+  }
+  )
+
+```
+
+### sample from posterior
+```{r, eval = T, echo = T}
+sapply(1:7, function(x) get.mvar.samp(watl.big[[1]][x,], vmat[[1]][x,]))
+```
+
+## Goodness of Fit
+
+### function: compare any two rows using loglinear model
+```{echo = F, eval = T, warning = F, message = F, comment=F}
+
+# function uses percentages, not counts
+
+get.loglin <- function(mat1, mat2){
+  fm = NULL
+  for(i in 1:nrow(mat1)){
+    fm[[i]] =  loglin(rbind(mat1[i,], mat2[i,]),c(1),print = F)
+  }
+  unlist(lapply(fm, function(x) pchisq(x$lrt, x$df)))
+}
+```
+
+### Between seasons of same run (e.g. Western Atlantic > 185cm)
+
+```{r, echo = T, eval = T, warning = F, message = F, comment=F}
+
+(bw.bs = get.loglin(watl.big[[1]], watl.big[[2]]))
+bw.bs
+
+```
+### compare between runs, same season
+```{r, echo = T, eval = T, warning = F, message = F, comment=F}
+# same row, same season, large and small WABFT
+(bg.sm = get.loglin(watl.big[[1]], watl.small[[1]]))
+bg.sm
+sapply(1:4, function(x) get.loglin(watl.big[[x]], watl.small[[x]]))
+```
+
+### compare between stocks, non-seasonal
+```{r, echo = T, eval = T, warning = F, message = F, comment=F}
+(e.w = get.loglin(ball.e, ball.w))
+e.w
+```
+
+### stocks and season
+```{r, echo = T, eval = T, warning = F, message = F, comment=F}
+(e.w.s = sapply(1:4, function(x) get.loglin(watl.big[[x]], eatl[[x]])))
+e.w.s
+```
