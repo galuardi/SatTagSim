@@ -3,10 +3,12 @@ title: "Movement matrix goodness of fit"
 author: "Benjamin Galuardi"
 date: '`r Sys.Date()`'
 output: pdf_document
+header-includes: \usepackage{color}
 ---
 
 ```{r, echo = F, eval = T, message = F, warning  = F}
 library(SatTagSim)
+library(knitr)
 
 username =  as.character(Sys.info()[7])
 setwd(paste0('C:/Users/', username,'/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/'))
@@ -17,8 +19,26 @@ load('sim_comparison_models.Rdata')
 ```
 
 ### functions for multinomial variance. 
-Here, we consider each row a multinomial
-```{r, echo = T, eval = T }
+
+The expected number of times the outcome $i$ observed over $n$ trials is
+\begin{equation}
+{\displaystyle \operatorname {E} (X_{i})=np_{i}\,} 
+\end{equation}
+
+\begin{equation}
+\operatorname{v}(X_i) = np_i(1-p_i)
+\end{equation}
+
+where $n$ is the number of trials and $p$ is the probability. Here, I consider each row of a movement matrix a multinomial. This is what we discussed in the proposal defense. 
+code modified from [\color{blue}here](http://stackoverflow.com/questions/19960605/r-multinomial-distribution-variance)
+
+#### \color{red}Question: 
+I'm not sure how to represent $n$, but I assumed the transition between seasons was a single trial for each row. 
+
+<!-- L(x_{sst(t)}) = \int_{SST_{min}}^{SST_{max}} N(t; \mu_z, \sigma_z)~dz -->
+
+```{r, echo = T, eval = T, warning = F, message = F, comment=F }
+# function to calculate variance of a multinomial row
 get.mvar = function(x){
   p = drop(x) # use the percentages
   v = p*(1-p)
@@ -27,6 +47,7 @@ get.mvar = function(x){
   v
 }
 
+# function to sample from a posterior multinomial distribution
 get.mvar.samp = function(vmu, vsd) {
   o = rtruncnorm(1, mean = vmu, sd = vsd, a = 0, 1)
   o[is.nan(o)] = 0
@@ -35,12 +56,18 @@ get.mvar.samp = function(vmu, vsd) {
 
 # example for seasonal transition matrices
 vmat = lapply(watl.big, function(x) apply(x, 1, get.mvar))
-
 ```
 
+```{r, vmattab, echo = F, eval = T, warning = F, message = F, comment=F  }
+kable(vmat[[1]], row.names = 1:7, col.names = 1:7, caption = "Multinomial variance for Western bluefin >185cm, in Winter", digits = 4)
+```
 
-### Plot the variance for each cell, each season (colorbar)
+\newpage
+
+## Plot the variance for each cell, each season (colorbar)
 ### Overlay with original movement matrix values
+
+Example using Western bluefin >185cm
 
 ```{r, eval = T, echo = F, fig.width = 9, fig.height=9, warning = F, message = F, comment=F, results = 'hide'}
 ex7 = expand.grid(1:7, 1:7)
@@ -55,51 +82,103 @@ sapply(1:4, function(x) {
 
 ```
 
-### sample from posterior
-```{r, eval = T, echo = T}
-sapply(1:7, function(x) get.mvar.samp(watl.big[[1]][x,], vmat[[1]][x,]))
+----
+
+\newpage
+
+## sample from posterior
+```{r, eval = T, echo = T, warning = F, message = F, comment=F}
+samp = data.frame(sapply(1:7, function(x) get.mvar.samp(watl.big[[1]][x,], vmat[[1]][x,])))
+names(samp) = 1:7
+kable(samp, row.names = 1:7, caption = 'Posterior sample: Western Atlantic bluefin > 185cm, Winter season', digits = 4)
 ```
+
+----
+
+\newpage
 
 ## Goodness of Fit
 
-### function: compare any two rows using loglinear model
-```{echo = F, eval = T, warning = F, message = F, comment=F}
+### function: compare pairs of rows of two matrices, using loglinear model
+returns the pchisq value
 
-# function uses percentages, not counts
+$\chi^{2}$ multinomial goodness of fit test from [\color{blue}here](http://www.r-tutor.com/elementary-statistics/goodness-fit/multinomial-goodness-fit)
+
+\begin{equation}
+{\displaystyle \operatorname {\chi^{2}} = \sum_{i} \frac{(f_{i}-e_{i})^2}{e_{i}}\,} 
+\end{equation}
+
+```{r, echo = F, eval = T, warning = F, message = F, comment=F}
+
+# first arguement is counts, second argument is probability. In this way, row-wise comparisons of two matrices may be made
+# p-values of the log-linear (chisq test) are returned
 
 get.loglin <- function(mat1, mat2){
   fm = NULL
   for(i in 1:nrow(mat1)){
-    fm[[i]] =  loglin(rbind(mat1[i,], mat2[i,]),c(1),print = F)
+    fm[[i]] =  loglin(rbind(mat1[i,], mat2[i,]+1e-30),c(1), print = F, fit = F)
   }
-  unlist(lapply(fm, function(x) pchisq(x$lrt, x$df)))
+  unlist(lapply(fm, function(x) 1-pchisq(x$lrt, x$df)))
+}
+
+get.mgof <- function(mat1, mat2){
+  fm = NULL
+  for(i in 1:nrow(mat1)){
+    fm[i] =  chisq.test(mat1[i,], p = mat2[i,]+1e-30)$p.value
+  }
+ fm
 }
 ```
 
-### Between seasons of same run (e.g. Western Atlantic > 185cm)
+### Between seasons of same run/stock (e.g. Western Atlantic > 185cm)
 
 ```{r, echo = T, eval = T, warning = F, message = F, comment=F}
-
-(bw.bs = get.loglin(watl.big[[1]], watl.big[[2]]))
-bw.bs
-
+bw.bs = get.mgof(watl.big.ct[[1]], watl.big[[2]])
+print(bw.bs)
 ```
+
+
 ### compare between runs, same season
-```{r, echo = T, eval = T, warning = F, message = F, comment=F}
+
+```{r, echo = T, eval = T, warning = F, message = F, comment=F, results = 'asis'}
 # same row, same season, large and small WABFT
-(bg.sm = get.loglin(watl.big[[1]], watl.small[[1]]))
-bg.sm
-sapply(1:4, function(x) get.loglin(watl.big[[x]], watl.small[[x]]))
+# (bg.sm = get.loglin(watl.big.ct[[1]], watl.small[[1]]))
+
+bg.sm = data.frame(sapply(1:4, function(x) get.mgof(watl.big.ct[[x]], watl.small[[x]])))
+names(bg.sm) =  names(watl.big)
+kable(bg.sm, row.names = 1:7, caption = "Western Atlantic bluefin > 185 cm vs < 185 cm", digits = 4)
+```
+
+\newpage
+
+### stocks and season
+```{r, echo = T, eval = T, warning = F, message = F, comment=F, results = 'asis'}
+e.w.s = data.frame(sapply(1:4, function(x) get.mgof(watl.big.ct[[x]], eatl[[x]])))
+names(e.w.s) =  names(watl.big)
+
+# library(xtable)
+
+# print(xtable(e.w.s, include.rownames = T), type = 'html')
+kable(e.w.s, row.names = 1:7, caption = "Western Atlantic bluefin > 185 cm vs Eastern Atlantic bluefin", digits = 4)
 ```
 
 ### compare between stocks, non-seasonal
-```{r, echo = T, eval = T, warning = F, message = F, comment=F}
+#### this doesn't work... need a differnt test if this comparison is neccesary
+
+```{r, echo = T, eval = F, warning = F, message = F, comment=F}
 (e.w = get.loglin(ball.e, ball.w))
-e.w
 ```
 
-### stocks and season
-```{r, echo = T, eval = T, warning = F, message = F, comment=F}
-(e.w.s = sapply(1:4, function(x) get.loglin(watl.big[[x]], eatl[[x]])))
-e.w.s
+----
+\newpage
+
+### Tradeoff between degrees of freedom and likelihood ratio within the $\chi^{2}$ test
+this helped answer a question I had earlier
+<!-- it seems the $\chi^{2}$ p-value is 1-pchisq.. when I do this, almost nothing is significantly different between matrices...   -->
+
+
+```{r, eval = T, echo = F}
+plot(pchisq(rep(50,100), df = 1:100), typ = 'l', lwd= 2, col = 4, xlab = 'DF', ylab = 'Value')
+title('pchisq value')
 ```
+
