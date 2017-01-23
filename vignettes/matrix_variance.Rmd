@@ -3,7 +3,7 @@ title: "Movement matrix goodness of fit"
 author: "Benjamin Galuardi"
 date: '`r Sys.Date()`'
 output: pdf_document
-header-includes: \usepackage{color}
+header-includes: \usepackage{color, enumitem}
 ---
 
 ```{r, echo = F, eval = T, message = F, warning  = F}
@@ -16,6 +16,22 @@ datadir = 'D:/SKYDRIVE_BACKUP/PHD_SIMS/SCRS_SIMS'
 
 mycol = colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"), space = "Lab")
 load('sim_comparison_models.Rdata')
+```
+
+#### Variables used in this example (three datasets/runs)
+ + East Atlantic
+ + West Atlantic large fish
+ + West Atlantic small fish
+
+```{r, echo = T, eval = F}
+
+eatl.ct = get.trans.prob(eatl.datbox, perc = F)
+watl.big.ct = get.trans.prob(watl.big.datbox, perc = F)
+watl.small.ct = get.trans.prob(watl.small.datbox, perc = F)
+eatl = get.trans.prob(eatl.datbox, perc = T)
+watl.big = get.trans.prob(watl.big.datbox, perc = T)
+watl.small = get.trans.prob(watl.small.datbox, perc = T)
+
 ```
 
 ### functions for multinomial variance. 
@@ -108,7 +124,7 @@ $\chi^{2}$ multinomial goodness of fit test from [\color{blue}here](http://www.r
 {\displaystyle \operatorname {\chi^{2}} = \sum_{i} \frac{(f_{i}-e_{i})^2}{e_{i}}\,} 
 \end{equation}
 
-```{r, echo = F, eval = T, warning = F, message = F, comment=F}
+```{r, echo = T, eval = T, warning = F, message = F, comment=F}
 
 # first arguement is counts, second argument is probability. In this way, row-wise comparisons of two matrices may be made
 # p-values of the log-linear (chisq test) are returned
@@ -130,7 +146,17 @@ get.mgof <- function(mat1, mat2){
 }
 ```
 
-### Between seasons of same run/stock (e.g. Western Atlantic > 185cm)
+I tried several versions of log-linear and $\chi^2$ tests. Log linear models, and their GLM versions, are essentially wrappers on $\chi^2$ tests for ease of use and flexibility in using contingency tables in various formats. 
+
+Since each row of the movments matrices is dependent on it's associated region i nthe previous time step, the matrix as a whole cannot be considered a contingency table. Each row, however, may be considered it's own 1-dimensional contingency table.  
+
+To compare any two rows, within a matrix or between matrices, the best method appeared to be the $\chi^2$ test. To set this up, counts within a row are compared to the probablity in another row. The probability from the second matirx row is simply $\frac{x_{i}}{\sum x_{i} }$, and is the markovian result we have used to date. 
+
+To do goodness of fit comparisons, I used the `get.mgof` function. If any probabilities are $0$, the $\chi^2$ has issues. I added $1e-30$ to alleviate this problem. Perhaps there is a better way?
+
+\newpage
+
+### Compare between seasons of same run/stock (e.g. Western Atlantic > 185cm)
 
 ```{r, echo = T, eval = T, warning = F, message = F, comment=F}
 bw.bs = get.mgof(watl.big.ct[[1]], watl.big[[2]])
@@ -138,7 +164,7 @@ print(bw.bs)
 ```
 
 
-### compare between runs, same season
+### Compare between runs, same season
 
 ```{r, echo = T, eval = T, warning = F, message = F, comment=F, results = 'asis'}
 # same row, same season, large and small WABFT
@@ -151,7 +177,7 @@ kable(bg.sm, row.names = 1:7, caption = "Western Atlantic bluefin > 185 cm vs < 
 
 \newpage
 
-### stocks and season
+### Compare stocks and season
 ```{r, echo = T, eval = T, warning = F, message = F, comment=F, results = 'asis'}
 e.w.s = data.frame(sapply(1:4, function(x) get.mgof(watl.big.ct[[x]], eatl[[x]])))
 names(e.w.s) =  names(watl.big)
@@ -162,10 +188,18 @@ names(e.w.s) =  names(watl.big)
 kable(e.w.s, row.names = 1:7, caption = "Western Atlantic bluefin > 185 cm vs Eastern Atlantic bluefin", digits = 4)
 ```
 
-### compare between stocks, non-seasonal
-#### this doesn't work... need a differnt test if this comparison is neccesary
+### Compare between stocks, non-seasonal
+#### this doesn't work... need a different test if this comparison is neccesary
 
 ```{r, echo = T, eval = F, warning = F, message = F, comment=F}
+
+# get overall transition rate; multiply the seasonal matrices
+b1 = watl.big
+b2 = eatl
+
+ball.w = b1[[1]]%*%b1[[2]]%*%b1[[3]]%*%b1[[4]]
+ball.e = b2[[1]]%*%b2[[2]]%*%b2[[3]]%*%b2[[4]]
+
 (e.w = get.loglin(ball.e, ball.w))
 ```
 
