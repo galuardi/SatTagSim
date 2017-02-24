@@ -1,0 +1,99 @@
+---
+title: "Movement matrix variance"
+author: "Benjamin Galuardi"
+date: '`r Sys.Date()`'
+output: pdf_document
+header-includes: \usepackage{color, enumitem}
+---
+
+```{r, echo = F, eval = T, message = F, warning  = F}
+library(SatTagSim)
+library(knitr)
+
+username =  as.character(Sys.info()[7])
+setwd(paste0('C:/Users/', username,'/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/'))
+
+# datadir = 'D:/SKYDRIVE_BACKUP/PHD_SIMS/SCRS_SIMS'
+
+mycol = colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"), space = "Lab")
+load('sim_variance_WABFT.Rdata')
+load('../box4.Rda')
+```
+
+## Example using Western tagged bluefin >185cm 
+
+Confidence intervals were constructed for simulations by reducing the number of tracks simulated in a single run and increasing the number of runs to a statistically significant amount. 
+
+For each month, 84 fish were released at locaitons proportional to where they were observed that month in the tagging data (n = 1008/run). This was replicated 1000 times for a total of 1,008,000 simulated fish. 
+
+For each run, a movement probability matirx was constructed, for a total of 1000 matrices. For each cell in each matrix position, the mean, median, standard deviation and 95% confidence interval were derived. Confidence intervals were defined as the 2.5% - 97.5% range of the 1000 runs.
+
+\newpage
+
+```{r, eval = T, echo = F, fig.width = 9, fig.height=9, warning = F, message = F, comment=F, results = 'hide', fig.cap = 'Mean (colorbar) and 95% CI (second line of each cell) for seasonal movement probabilities using the 7-box structure (see Figure 3)'}
+ex7 = expand.grid(1:7, 1:7)
+## Quantile range
+##
+par(mfrow=c(2,2))
+par(mar = c(2,4,2,4))
+sapply(1:4, function(x) {
+  image.plot(1:7, 1:7, t(boxmedian[[x]]), col = mycol(49), xlab = '', ylab = '', zlim = c(0, 1))
+  # text(ex7[,1], ex7[,2], round(as.vector(t(boxmean[[x]]/rowSums(boxmean[[x]]))), 2), font = 2)
+  text(ex7[,1], ex7[,2], paste0(round(t(boxmean[[x]]),2),"\n" ,"(",round(t(boxq.low[[x]]), 2), "-", round(t(boxq.high[[x]]), 2), ")"), font = 2, cex = .65)
+  grid(7,7,col = 'grey50')
+  title(seasons[x])
+}
+)
+
+```
+
+---
+
+\newpage
+
+
+```{r, eval = T, echo = F, fig.width = 9, fig.height=9, warning = F, message = F, comment=F, results = 'hide', fig.cap = 'Mean and 95% CI for seasonal movement probabilities using the 4-box structure (see Figure 4)'}
+ex4 = expand.grid(1:4, 1:4)
+
+par(mfrow=c(2,2))
+sapply(1:4, function(x) {
+  image.plot(1:4, 1:4, t(boxmean4[[x]]), col = mycol(100), xlab = '', ylab = '', zlim = c(0, 1)) # highlights the mean value
+  # image.plot(1:7, 1:7, round(t(boxq.high[[x]]),2)-round(t(boxq.low[[x]]),2), col = mycol(49), xlab = '', ylab = '', zlim = c(0, 1)) # highlights the 95% CI range
+  # text(ex7[,1], ex7[,2], round(as.vector(t(boxmean[[x]]/rowSums(boxmean[[x]]))), 2), font = 2)
+  text(ex4[,1], ex4[,2], paste0(round(t(boxmean4[[x]]),2),"\n" ,"(",round(t(boxq.low4[[x]]), 2), " - ", round(t(boxq.high4[[x]]), 2), ")"), font = 2)
+  grid(4,4,col = 'grey50')
+  title(seasons[x])
+}
+)
+
+```
+
+---
+
+\newpage
+
+```{r, eval = T, echo = F, fig.width = 9, fig.height=9, warning = F, message = F, comment=F, results = 'hide' ,fig.cap = '7-box operating model used in Kerr et al. (2012-2016)'}
+plot(box7, col = rev(grey.colors(14))[1:7], border = 'orange', add=F, lwd = 3)
+fields::world(add=T, col = 'cornsilk', fill=T)
+text(coordinates(box7)[,1], coordinates(box7)[,2], 1:7, col = 'red', cex = 1.5)
+box()
+degAxis(1)
+degAxis(2)
+title('7-box operating model')
+```
+
+---
+
+\newpage
+
+```{r, eval = T, echo = F, fig.width = 9, fig.height=9, warning = F, message = F, comment=F, results = 'hide', fig.cap = '4-box model sugegsted by Matt Lauretta (SEFSC)'}
+plot(box4, col = grey.colors(4), border = 'orange', add=F, lwd = 3)
+fields::world(add=T, col = 'cornsilk', fill=T)
+text(coordinates(box4)[,1], coordinates(box4)[,2], 1:4, col = 2, cex = 3)
+box()
+degAxis(1)
+degAxis(2)
+title('4-box operating model')
+```
+
+---
