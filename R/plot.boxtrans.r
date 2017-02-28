@@ -22,12 +22,31 @@ ggplot(bb, aes(x=Var2, y = Var1, fill = value))+
   facet_wrap(~L1)+
   xlab('Ending Area')+
   ylab('Start Area')+
-  scale_x_continuous(breaks = 1:lab.dim, labels = 1:lab.dim)+
-  scale_y_continuous(breaks = 1:lab.dim, labels = 1:lab.dim)+
-  theme(axis.text = element_text(size = 12),
-        axis.title=element_text(size=14, face="bold"),
-        strip.text = element_text(size = 12),
-        panel.background = element_rect(fill = "white"))
+  # scale_x_continuous(breaks = 1:lab.dim, labels = 1:lab.dim)+
+  # scale_y_continuous(breaks = 1:lab.dim, labels = 1:lab.dim)+
+  # theme(axis.text = element_text(size = 12),
+  #       axis.title=element_text(size=14, face="bold"),
+  #       strip.text = element_text(size = 12),
+  #       panel.background = element_rect(fill = "white"))
+    theme(strip.text = element_text(size=15)
+          ,  axis.title.x = element_text(size = 20)
+          ,  axis.title.y = element_text(size = 20))
 }
+
+# bb11 = melt(boxtrans11)
+# bb11$seasons = c(sapply(1:4, function(x) rep(x, nrow(bb11)/4)))
+# bb11$seasons = reorder(bb11$L1, bb11$seasons)
+#
+# ggplot(bb11, aes(x=Var2, y = Var1, fill = value))+
+#   geom_tile()+
+#   # geom_label(label = round(bb$value,2), colour = 'white', fontface = 'bold')+
+#   geom_text(label = round(bb11$value,2), col = 'white', fontface = 'bold', size = 3)+
+#   scale_fill_distiller(palette = "BrBG", direction = 1)+
+#   facet_wrap(~seasons)+
+#   xlab('End (Current)Area')+
+#   ylab('Start (Previous) Area')+
+#   theme(strip.text = element_text(size=15)
+#         ,  axis.title.x = element_text(size = 20)
+#         ,  axis.title.y = element_text(size = 20))
 
 # plot.boxtrans(boxtrans)
