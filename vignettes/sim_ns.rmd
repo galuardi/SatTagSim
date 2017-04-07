@@ -1,22 +1,32 @@
 ---
 title: "Simulate using SatTagSim"
 author: "Benjamin Galuardi"
-date: "`r Sys.Date()`"
-output: 
-  rmarkdown::html_vignette:
+date: '`r Sys.Date()`'
+output:
+  pdf_document:
     fig_caption: yes
-vignette: >
-  %\VignetteIndexEntry{Simulate using SatTagSim}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  html_document: null
 ---
+<!-- rmarkdown::html_vignette: -->
+<!--     fig_caption: yes -->
+<!-- vignette: > -->
+<!--   %\VignetteIndexEntry{Simulate using SatTagSim} -->
+<!--   %\VignetteEngine{knitr::rmarkdown} -->
+<!--   %\VignetteEncoding{UTF-8} -->
+
 ##Simulation of Nova Scotia tagged Atlantic bluefin tuna \emph{(Thunnus thynnus)} and get seasonal transition matrices from a 7-box spatial strata.
 
 
----
+```{r, global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, 
+											message=FALSE, cache=TRUE,
+											progress = TRUE, verbose = FALSE, fig.width = 8, fig.height = 6)
+
+```	
+
 load background data and set up parallel
 
-```{r eval = T, echo = F}
+```{r, setup_data, eval = T}
 library(SatTagSim)
 data(box7)
 data(rmask)
@@ -25,11 +35,10 @@ mcoptions = setup.parallel()
 ```
 
 
----
 ## Spatial strata in this package
 7-box strata from the Kerr et al. operational model
 
-```{r, fig.width = 7, fig.height= 5, fig.show = 'asis', echo = F, eval = T}
+```{r, plot_box7, fig.show = 'asis', echo = F, eval = T}
 # library(fields)
 # library(raster)
 # library(SatTagSim)
@@ -44,13 +53,16 @@ box()
 title('7-box')
 ```
 
----
+
+\newpage
+
 ## Environmental data in this package
 World Ocean Atlas sea surface temperature is included. A raster mask, predicated on suitable temperature habitat in each month, is also included. 
 
-```{r echo = F, eval = T, fig.show = 'asis', fig.width = 7, fig.height= 5}
+```{r, plot_WOA, eval = T, fig.show = 'asis'}
 library(fields)
 library(raster)
+library(matlab)
 data(rmask)
 data(woasst)
 sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
@@ -73,19 +85,20 @@ world(add=T, col = 'white')
 title('Number of months with suitable surface temperature')
 ```
 
----
+\newpage
+
 ## Set up the temperature constraint field. 
 
 This can be done several ways. The preferred method is to use a running average of suitability, by month, for 12 months. In this manner, there is not a hard limit as to whether a fish may be in the area or not, but does provide a selection criteria that is weighted toward the suitability in that month.
 
 The temperature field provided `data(rmask)` is a surface temperature suitability for bluefin tuna, based on tag measured temperatures. 
 
-```{r echo = F, eval = T, fig.show = 'asis', fig.width = 7, fig.height= 5, fig.cap='Tag Measured Temperatures'}
+```{r, plot_ecdf, eval = T, fig.show = 'asis',  fig.cap = 'Tag Measured Temperatures'}
 dat = nsfish
 
 par(mfrow=c(3,4))
 for(i in 1:12){
-	plot(ecdf(dat$MaxTemp[dat$Month==i]), main = month.name[i])
+	plot(ecdf(dat$MaxTemp[dat$Month==i]), main = month.name[i], xlab = '' ,ylab = '')
 	# hist(dat$MaxTemp[seasidx[[i]]], breaks=30, main=seasons[i], xlim = c(0, 40))
 	mtemp = mean(dat$MaxTemp[dat$Month==i], na.rm=T)
 	sdtemp = sd(dat$MaxTemp[dat$Month==i], na.rm=T)
@@ -98,8 +111,9 @@ for(i in 1:12){
 
 Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen 
 
+\newpage
 
-```{r echo = F, eval = F, fig.show = 'asis', fig.width = 7, fig.height= 5}
+```{r, plot_sstdat, eval = F, fig.show = 'asis'}
 # SET UP THE WOA SST AS A 3D ARRAY
 # Function does not work!!!
 # sstmat = rmask2array(rmask)
