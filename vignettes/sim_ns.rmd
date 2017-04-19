@@ -28,17 +28,58 @@ load background data and set up parallel
 
 ```{r, setup_data, eval = T}
 library(SatTagSim)
+library(analyzepsat)
 data(box7)
 data(rmask)
+data(nsfish)
+data(myramps)
 # sst = rmask2array(rmask)
-mcoptions = setup.parallel()
+# mcoptions = setup.parallel()
 ```
 
+## Tag data:
+```{r, plot_tags, fig.width = 9, fig.height = 6}
+par(mar = c(3,3,3,6))
+plot(nsfish, col = month.colors[nsfish$Month,2], pch = 19, cex = .6, ylim = c(20, 50), xlim = c(-100, 0))
+world(add=T, col = 'cornsilk4', fill=T)
+degAxis(1)
+degAxis(2)
+box()
+ .add.month.scale()
+```
+
+## plot as raster:
+```{r, plot_tags_raster, fig.width = 8, fig.height = 6}
+
+make.tag.raster  <- function(simdat, xmn = -100, xmx = 30, ymn = 0, ymx = 60, boxsize= 60){
+  # require(raster)
+  if(class(simdat)=="SpatialPointsDataFrame"){
+      simdat = as.data.frame(simdat)
+  }
+  r = raster(nrow=(ymx-ymn)*60/boxsize, ncol= (xmx-xmn)*60/boxsize, xmn = xmn, xmx = xmx, ymn = ymn, ymx = ymx)
+  simdat$CID = 1
+  coordinates(simdat) = ~Longitude+Latitude
+  sr = rasterize(simdat, r, field = 'CID', fun='count') #[[1]]
+  return(sr)
+}
+
+r = dlply(as.data.frame(nsfish), 'Month', function(x) make.tag.raster(x))
+
+r = make.tag.raster(nsfish)
+
+library(viridis)
+plot(r, col = rev(viridis(100)), ylim = c(20, 50), xlim = c(-100, 0), axes =F)
+world(add=T, col = 'cornsilk4', fill=T)
+degAxis(1)
+degAxis(2)
+box()
+
+```
 
 ## Spatial strata in this package
 7-box strata from the Kerr et al. operational model
 
-```{r, plot_box7, fig.show = 'asis', echo = F, eval = T}
+```{r, plot_box7, fig.show = 'asis', echo = F, eval = T, fig.width = 8, fig.height = 6, fig.cap = '7- box stratification from Kerr et al. (2016) operational model'}
 # library(fields)
 # library(raster)
 # library(SatTagSim)
@@ -51,6 +92,19 @@ degAxis(1)
 degAxis(2)
 box()
 title('7-box')
+```
+
+
+```{r, plot_box11, fig.show = 'asis', echo = F, eval = T, fig.width = 8, fig.height = 6, fig.cap = '11- box stratification from Lauretta et al. (2016) spatial summary'}
+
+plot(box11, xlim = c(-100, 40), ylim = c(0,65))
+world(add=T)
+plot(box11, add = T, border = 'salmon', lwd=2)
+text(coordinates(box11)[,1], coordinates(box11)[,2], box7@data[,3], cex = 2, col = 'darkred')
+degAxis(1)
+degAxis(2)
+box()
+title('11-box')
 ```
 
 
