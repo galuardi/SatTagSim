@@ -194,10 +194,31 @@ Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen
 \newpage
 
 ```{r, sst_pref_plot, fig.cap = 'Number of months with suitable surface temperature'}
-image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65), col = viridis(12))
+image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65), col = viridis(12), axes = F)
 plot(map, add=T, col = 'white')
 # world(add=T, col = 'white')
+degAxis(1)
+degAxis(2)
 title('Number of months with suitable surface temperature')
+
+```
+
+```{r, sst_pref_plot_12months, fig.cap = 'Number of months with suitable surface temperature'}
+
+par(mfrow=c(3,4))
+for(i in 1:12){
+  par(mar=c(1,1,2,1))
+image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim = c(-100, 40), ylim = c(0,65), col = viridis(2), axes = F)
+plot(map, add=T, col = 'white')
+box()
+# world(add=T, col = 'white')
+# degAxis(1)
+# degAxis(2)
+degAxis(1, tck = 0.02, las = 2, hadj = -1)
+degAxis(2, tck = 0.02, las = 1, hadj = -1)
+title(month.name[i])
+}
+# title('Number of months with suitable surface temperature')
 
 ```
 
