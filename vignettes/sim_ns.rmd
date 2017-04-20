@@ -29,10 +29,14 @@ load background data and set up parallel
 ```{r, setup_data, eval = T}
 library(SatTagSim)
 library(analyzepsat)
+library(rworldmap)
+library(rworldxtra)
 data(box7)
+data(box11)
 data(rmask)
 data(nsfish)
 data(myramps)
+map = rworldmap::getMap(resolution = 'high')
 # sst = rmask2array(rmask)
 # mcoptions = setup.parallel()
 ```
@@ -41,12 +45,23 @@ data(myramps)
 ```{r, plot_tags, fig.width = 9, fig.height = 6}
 par(mar = c(3,3,3,6))
 plot(nsfish, col = month.colors[nsfish$Month,2], pch = 19, cex = .6, ylim = c(20, 50), xlim = c(-100, 0))
-world(add=T, col = 'cornsilk4', fill=T)
+plot(map, add=T, col = 'cornsilk4', fill=T)
 degAxis(1)
 degAxis(2)
 box()
  .add.month.scale()
 ```
+
+\newpage
+
+
+```{r}
+# length of deployments
+ddply(as.data.frame(nsfish), c('TagID'), function(x) data.frame(nmonths = length(unique(x$Month))))
+```
+
+
+\newpage
 
 ## plot as raster:
 ```{r, plot_tags_raster, fig.width = 8, fig.height = 6}
@@ -76,6 +91,8 @@ box()
 
 ```
 
+\newpage
+
 ## Spatial strata in this package
 7-box strata from the Kerr et al. operational model
 
@@ -94,13 +111,19 @@ box()
 title('7-box')
 ```
 
+\newpage
 
 ```{r, plot_box11, fig.show = 'asis', echo = F, eval = T, fig.width = 8, fig.height = 6, fig.cap = '11- box stratification from Lauretta et al. (2016) spatial summary'}
 
-plot(box11, xlim = c(-100, 40), ylim = c(0,65))
+plot(box11, xlim = c(-100, 40), ylim = c(-50,80))
 world(add=T)
 plot(box11, add = T, border = 'salmon', lwd=2)
-text(coordinates(box11)[,1], coordinates(box11)[,2], box7@data[,3], cex = 2, col = 'darkred')
+
+lpts = coordinates(box11)
+lpts[4,2] = 35
+lpts[9,] = c(-25, 25)
+
+text(lpts[,1], lpts[,2], box11@data[,3], cex = 2, col = 'darkred')
 degAxis(1)
 degAxis(2)
 box()
@@ -113,7 +136,7 @@ title('11-box')
 ## Environmental data in this package
 World Ocean Atlas sea surface temperature is included. A raster mask, predicated on suitable temperature habitat in each month, is also included. 
 
-```{r, plot_WOA, eval = T, fig.show = 'asis'}
+```{r, plot_WOA, eval = T, fig.show = 'asis', fig.cap = 'World Ocean Atlas (2013) mean temperature'}
 library(fields)
 library(raster)
 library(matlab)
@@ -130,14 +153,19 @@ sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
 sstmat$data = sstdata
 # par(mfrow=c(1,2))
 par(mar = c(2,2,2,4))
-image.plot(woasst$lon, woasst$lat, apply(woasst$sst, 1:2, mean, na.rm = T))
-world(add=T) 
+image.plot(woasst$lon, woasst$lat, apply(woasst$sst, 1:2, mean, na.rm = T), axes = F)
+map(add = T, col = 'white', fill = T)
+# world(add=T) 
+degAxis(1)
+degAxis(2)
+box()
 title('World Ocean Atlas mean temperature')
 
-image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65))
-world(add=T, col = 'white')
-title('Number of months with suitable surface temperature')
+# image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65))
+# world(add=T, col = 'white')
+# title('Number of months with suitable surface temperature')
 ```
+
 
 \newpage
 
@@ -161,9 +189,17 @@ for(i in 1:12){
 	# print(quantile(dat$MaxTemp[dat$Month==i], c(0.025, .975),na.rm=T))
 }
 ```
-
-
 Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen 
+
+\newpage
+
+```{r, sst_pref_plot, fig.cap = 'Number of months with suitable surface temperature'}
+image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65), col = viridis(12))
+plot(map, add=T, col = 'white')
+# world(add=T, col = 'white')
+title('Number of months with suitable surface temperature')
+
+```
 
 \newpage
 
@@ -202,15 +238,25 @@ for(i in 1:12){
 }
 ```
 
-Struture of the sst array: 
-```{r, echo = F, eval = T}
-str(sstmat)
+## get parameters from tag data
+
+```{r, get_params, echo = T}
+par.ns = get.allpar(as.data.frame(nsfish))
+d.ns = get.kfD(as.data.frame(nsfish))
+simpar = merge.par(par.ns, d.ns, return.mean = T)
 ```
 
-## More Examples
+```{r, show_params_table}
+knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
+```
 
 
-> "He who gives up [code] safety for [code] speed deserves neither."
-([via](https://twitter.com/hadleywickham/status/504368538874703872))
 
-footnotes^[A footnote here.]
+
+<!-- ## More Examples -->
+
+
+<!-- > "He who gives up [code] safety for [code] speed deserves neither." -->
+<!-- ([via](https://twitter.com/hadleywickham/status/504368538874703872)) -->
+
+<!-- footnotes^[A footnote here.] -->
