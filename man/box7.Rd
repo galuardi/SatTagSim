@@ -4,8 +4,8 @@
 \name{box7}
 \alias{box7}
 \alias{box8}
-\alias{lha.NATL}
 \alias{lha.WORLD}
+\alias{lha.NATL}
 \alias{wgridspp}
 \title{Datasets used in SatTagSim of 7-box schema of the north Atlantic}
 \format{SpatialPointsDataFrame}
@@ -31,4 +31,3 @@ plot(box7, border = 'salmon', lwd=2)
 world(add = T)
 }
 \keyword{datasets}
-

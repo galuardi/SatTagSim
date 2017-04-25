@@ -18,10 +18,9 @@ Function to add diffusion (D) and sd(D) from Kalman filter estimations. D and sd
 \examples{
 see vignette
 }
-\author{
-Benjamin Galuardi
-}
 \seealso{
 \code{\link{merge.par}} \code{\link{get.uv}} \code{\link{get.allpar}}
 }
-
+\author{
+Benjamin Galuardi
+}

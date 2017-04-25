@@ -24,4 +24,3 @@ This function is designed to run on a data frame of many simulated tracks. It lo
 \examples{
 see vignette
 }
-

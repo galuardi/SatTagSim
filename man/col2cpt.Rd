@@ -31,11 +31,10 @@ I love GMT. No other reason for this to be in here.
 
 col2cpt(nmin = 0, nmax = 40, clist = c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"),  outfile = 'my_colors.cpt', length=100)
 }
-\author{
-Benjamin Galuardi
-}
 \references{
 Wessel, P., Smith, W.H.F., Scharroo, R., Luis, J., and Wobbe, F. 2013. Generic Mapping Tools: Improved Version Released. Eos, Transactions American Geophysical Union 94(45): 409–410. doi:10.1002/2013EO450001.
 http://gmt.soest.hawaii.edu/doc/latest/index.html
 }
-
+\author{
+Benjamin Galuardi
+}

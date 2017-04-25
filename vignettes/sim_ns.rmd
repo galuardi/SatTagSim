@@ -276,7 +276,7 @@ knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulatio
 
 ## Setup simulation parameters
 
-```{r, echo = F, eval = T}
+```{r, set_simpar, echo = F, eval = T}
 
 #------------------------------------------------------------------------#
 # Set number of sims, simulation steps per month and number of years
@@ -309,18 +309,23 @@ kable(morder, caption = 'Month order for multi-month start simulation', row.name
 
 Set any indices for size or other criteria here. 
 
-```{r, eval = T, echo = T}
+```{r, stat_points, eval = T, echo = T}
 ns = as.data.frame(nsfish)
 ns = ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
 spts = get.start.pts(ns, msims, months = 1:12, posnames = c('Longitude','Latitude'))
 str(spts)
-```
+# plot(map, xlim = c(-100, 0), ylim = c(20, 50))
+# for(i in 1:12) points(spts[[i]], col = month.colors[which(as.numeric(month.colors[,1])==i),2], pch = 19)
+# degAxis(1)
+# degAxis(2)
+# box()
 
+```
 
 
 ## Run a single simulation in parallel
 
-```{r, eval = T}
+```{r, simulate, eval = T}
 
 mcoptions = setup.parallel()
 
@@ -331,6 +336,7 @@ print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'
 stime = Sys.time()
 simdat = list()
 
+ncores = detectCores()
 cl = makeCluster(ncores)
 registerDoParallel(cl, cores = ncores)
 
@@ -352,5 +358,46 @@ stopCluster(cl)
 rm(test, sp, subsp)
 
 simdat = unlist(simdat, recursive = F)
+```
+
+## Make a dataframe and raser of results
+
+```{r, simdatdf, eval = T, fig.cap = 'Posterior distribution of simulated tracks; 1-minute cell size'}
+# MAKE A DATA FRAME OF THE RESULTS
+simdatdf = ldply(simdat)
+seasons = c("Winter", "Spring", "Summer", "Fall")
+# seasidx = make.seas.idx(simdatdf)
+simdatdf$seas[simdatdf$Month%in%c(1,2,3)] = 1
+simdatdf$seas[simdatdf$Month%in%c(4,5,6)] = 2
+simdatdf$seas[simdatdf$Month%in%c(7,8,9)] = 3
+simdatdf$seas[simdatdf$Month%in%c(10,11,12)] = 4
+# rm(seasidx)
+
+names(simdatdf)[which(names(simdatdf)%in%c('lon,','lat'))] = c('lon','lat')
+
+#---------------------------------------------------------------#
+# Make Rasters of Results
+
+mycol = colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"), space = "Lab")
+
+sr = dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize = 60))
+
+par(mfrow=c(2,2))
+par(mar=c(2,2,2,2))
+for(i in 1:4){
+  plot(sr[[i]]/max(values(sr[[i]]), na.rm=T), zlim = c(0.01,1), interp=F, col=mycol(256), axes=F)
+  rpts = xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
+  world(add=T, col='grey80', fill=F)
+  #   plot(box7, add=T, border='salmon', lwd=2)
+  #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font=2, cex=1.2)
+  plot(box11, add=T, border='salmon', lwd=2)
+  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font=2, cex=1.2)
+  text(lpts[,1], lpts[,2], box11@data[,3], cex = 2, col = 'black')
+  degAxis(1)
+  degAxis(2)
+  title(seasons[i])
+  box()
+}
+
 ```
 

@@ -27,4 +27,3 @@ simdatdf$seas[simdatdf$Month\%in\%c(10,11,12)] = 4
 sr = dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize=60))
 plot.seas.change(sr)
 }
-

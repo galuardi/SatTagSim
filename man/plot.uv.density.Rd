@@ -29,4 +29,3 @@ Diagnostic ggplots of advection
 \examples{
 see vignette
 }
-

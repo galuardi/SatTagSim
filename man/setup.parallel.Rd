@@ -18,4 +18,3 @@ Setup parallel processing for simulations
 mcoptions = setup.parallel()
 
 }
-

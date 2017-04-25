@@ -25,4 +25,3 @@ see vignette
 \seealso{
 \code{\link{get.trans.prob}} \code{\link{box7}}
 }
-

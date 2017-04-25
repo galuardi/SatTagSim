@@ -41,9 +41,6 @@ plot(simm.kf(n = 1000, u = c(10,1), v = c(0,1), D = c(10,1), sp = c(-70,40)), ty
 plot(simm.kf(n = 1000, u = c(0,0), v = c(0,0), D = c(5000,1000), sp = c(-70,40)), typ = 'o', pch = 19, col =4, xlab = 'lon', ylab = 'lat')
 
 }
-\author{
-Benjamin Galuardi
-}
 \references{
 Sibert, J. R., Musyl, M. K. and Brill, R. W. 2003. Horizontal movements of bigeye tuna (Thunnus obesus) near Hawaii determined by Kalman filter analysis of archival tagging data. Fish. Oceanogr. 12(3): 141?151.
 Calenge, C. (2006) The package adehabitat for the R software: a tool for the analysis of space and habitat use by animals. Ecological Modelling, 197, 516-519
@@ -51,4 +48,6 @@ Calenge, C. (2006) The package adehabitat for the R software: a tool for the ana
 \seealso{
 \code{\link{make.sim.track.par}}
 }
-
+\author{
+Benjamin Galuardi
+}

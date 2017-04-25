@@ -32,4 +32,3 @@ spts = get.start.pts(nsfish)
 world(xlim = c(-100, 0), ylim = c(20, 50))
 lapply(spts, points, pch = 19, cex = .4)
 }
-

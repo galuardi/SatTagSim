@@ -33,4 +33,3 @@ see Vignettes
 \author{
 Benjamin Galuardi
 }
-

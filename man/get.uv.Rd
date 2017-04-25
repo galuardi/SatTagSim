@@ -18,10 +18,9 @@ Get advective parameters from an estimated track or section of track
 \examples{
 none. Typically used within other functions
 }
-\author{
-Benjamin Galuardi
-}
 \seealso{
 \code{\link{merge.par}} \code{\link{get.kfD}} \code{\link{get.allpar}}
 }
-
+\author{
+Benjamin Galuardi
+}

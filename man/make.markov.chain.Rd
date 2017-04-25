@@ -31,4 +31,3 @@ xx = sapply(sample(1:4, 100, replace = T ), function(x) make.markov.chain(boxtra
 image.plot(1:200, 1:2,(xx[1:200,1:2]), nlevel = 7, zlim = c(1,7), xlab = 'cycle', ylab = 'chain (fish)', axes = T)
 barplot(table(xx[1:200,]))
 }
-

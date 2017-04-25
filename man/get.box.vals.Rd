@@ -20,4 +20,3 @@ Get overlay of boxes from a track
 \seealso{
 \code{\link{get.first.box}}
 }
-

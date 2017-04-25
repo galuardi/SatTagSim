@@ -47,4 +47,3 @@ rm(sstdata, sstm)
 image.plot(sstmat$lon, sstmat$lat, sstmat$data[,,1], nlevel = 4, col = terrain.colors(4), main = 'January temperature suitability', xlab = "longitude", ylab = "latitude")
 }
 \keyword{datasets}
-

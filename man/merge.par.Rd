@@ -30,10 +30,9 @@ Dpar = get.kfD(as.data.frame(nsfish))
 simpar = merge.par(uvpar, Dpar, return.mean=T)
 
 }
-\author{
-Benjamin Galuardi
-}
 \seealso{
 \code{\link{get.kfD}} \code{\link{get.uv}} \code{\link{get.allpar}}
 }
-
+\author{
+Benjamin Galuardi
+}

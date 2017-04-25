@@ -19,4 +19,3 @@ Function to tranfrom a raster brick of sst to a 3d array and orient properly
 data(rmask)
 sst = rmask2array(rmask)
 }
-

@@ -21,4 +21,3 @@ btracks must have a 'Month' column
 \examples{
 see vignette
 }
-

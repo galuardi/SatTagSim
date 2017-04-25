@@ -20,10 +20,9 @@ Function to get monthly u and v advection parameters for a group of tracks
 \examples{
 see Vignettes
 }
-\author{
-Benjamin Galuardi
-}
 \seealso{
 \code{\link{merge.par}} \code{\link{get.uv}}
 }
-
+\author{
+Benjamin Galuardi
+}

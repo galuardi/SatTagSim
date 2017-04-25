@@ -20,4 +20,3 @@ Dataset of PSAT tagged Atlantic bleufin tuna from Galuardi et al. 2010
 Kalman filter estimated tracks of 31 Atlantic bleufin tuna including Diffusive terms used in the track estimation
 }
 \keyword{datasets}
-

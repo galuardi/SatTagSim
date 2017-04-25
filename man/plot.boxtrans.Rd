@@ -5,7 +5,7 @@
 \title{plot.boxtrans}
 \usage{
 plot.boxtrans(boxtrans, palette = "BrBG", text.col = "white",
-  text.size = 6)
+  text.size = 6, strip.text = 15, axis.text = 20)
 }
 \arguments{
 \item{boxtrans}{transition matrices returned from \code{\link{get.trans.prob}}}
@@ -15,6 +15,10 @@ plot.boxtrans(boxtrans, palette = "BrBG", text.col = "white",
 \item{text.col}{text color}
 
 \item{text.size}{text size of cells}
+
+\item{strip.text}{text size of panel strips}
+
+\item{axis.text}{text size of axes}
 }
 \value{
 a four panel, seasonal plot (ggplot)
@@ -22,4 +26,3 @@ a four panel, seasonal plot (ggplot)
 \description{
 plot.boxtrans
 }
-
