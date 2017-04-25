@@ -20,7 +20,7 @@ get.start.pts <- function(dat, n = 100, months = 1:12, mask = rmask, posnames = 
 					  nidx = which(names(tmp)%in%posnames)
 					  names(tmp)[nidx] = c('lon','lat')
 					  tmpr = make.sim.raster(tmp)
-					  tmpr = resample(tmpr, mask)*mask[[i]]
+					  tmpr = raster::resample(tmpr, mask)*mask[[i]]
 					  tmpdf = as.data.frame(as(tmpr, 'SpatialPointsDataFrame'))
 					  tmpdf[,1] = tmpdf[,1]/max(tmpdf[,1])
 					  pts = tmpdf[sample(1:nrow(tmpdf), n, prob = tmpdf[,1], replace = T),2:3] # note: the sampl

@@ -31,6 +31,7 @@ library(SatTagSim)
 library(analyzepsat)
 library(rworldmap)
 library(rworldxtra)
+library(knitr)
 data(box7)
 data(box11)
 data(rmask)
@@ -150,7 +151,9 @@ sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
   for(i in 1:(dim(rmask)[3])) sstdata[,,i] = rot90(as.array(rmask)[,,i],3)
   # sstmat$data = apply(sstdata, 1:2, sum, na.rm = T)
 
+sstdata[is.na(sstdata)] = 0
 sstmat$data = sstdata
+
 # par(mfrow=c(1,2))
 par(mar = c(2,2,2,4))
 image.plot(woasst$lon, woasst$lat, apply(woasst$sst, 1:2, mean, na.rm = T), axes = F)
@@ -208,14 +211,14 @@ title('Number of months with suitable surface temperature')
 par(mfrow=c(3,4))
 for(i in 1:12){
   par(mar=c(1,1,2,1))
-image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim = c(-100, 40), ylim = c(0,65), col = viridis(2), axes = F)
+image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim = c(-100, 40), ylim = c(0,65), col = hsv(.28, .9, .5, alpha = .5), axes = F)
 plot(map, add=T, col = 'white')
 box()
 # world(add=T, col = 'white')
 # degAxis(1)
 # degAxis(2)
-degAxis(1, tck = 0.02, las = 2, hadj = -1)
-degAxis(2, tck = 0.02, las = 1, hadj = -1)
+# degAxis(1, tck = 0.02, las = 2, hadj = -1)
+# degAxis(2, tck = 0.02, las = 1, hadj = -1)
 title(month.name[i])
 }
 # title('Number of months with suitable surface temperature')
@@ -259,7 +262,7 @@ for(i in 1:12){
 }
 ```
 
-## get parameters from tag data
+## Get parameters from tag data
 
 ```{r, get_params, echo = T}
 par.ns = get.allpar(as.data.frame(nsfish))
@@ -271,13 +274,83 @@ simpar = merge.par(par.ns, d.ns, return.mean = T)
 knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
 ```
 
+## Setup simulation parameters
+
+```{r, echo = F, eval = T}
+
+#------------------------------------------------------------------------#
+# Set number of sims, simulation steps per month and number of years
+
+msims = 25  # simulations to be started in each month
+npmon = 30 # number of simulation steps per month.
+nyears = 2 # number of years to simulate for each track
+#------------------------------------------------------------------------#
+
+simvals = data.frame(sim_param = c('msims','npmon','nyears'), value = c(25, 30, 2), description = c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track'))
+
+kable(simvals, caption = "Control parameters for simulation")
+
+#------------------------------------------------------------------------#
+# Set month order of simulaitons to correspond to release month
+morder = array(rep(1:12, 12), dim=c(12, 12))
+
+for(i in 1:12){
+  if(i==1) morder[i,] = 1:12
+  else morder[i,] = c(i:12,1:((1:12)[i]-1))
+}
+#------------------------------------------------------------------------#
+
+morder = data.frame(morder, row.names = month.abb)
+names(morder) = paste0('m',1:12)
+kable(morder, caption = 'Month order for multi-month start simulation', row.names = T)
+```
+
+## Set up starting points for multi-start month simulation
+
+Set any indices for size or other criteria here. 
+
+```{r, eval = T, echo = T}
+ns = as.data.frame(nsfish)
+ns = ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
+spts = get.start.pts(ns, msims, months = 1:12, posnames = c('Longitude','Latitude'))
+str(spts)
+```
 
 
 
-<!-- ## More Examples -->
+## Run a single simulation in parallel
 
+```{r, eval = T}
 
-<!-- > "He who gives up [code] safety for [code] speed deserves neither." -->
-<!-- ([via](https://twitter.com/hadleywickham/status/504368538874703872)) -->
+mcoptions = setup.parallel()
 
-<!-- footnotes^[A footnote here.] -->
+#---------------------------------------------------------------#
+# SIMULATIONS
+
+print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'))
+stime = Sys.time()
+simdat = list()
+
+cl = makeCluster(ncores)
+registerDoParallel(cl, cores = ncores)
+
+for(i in 1:12){
+  subsp = spts[[i]][sample(1:nrow(spts[[i]]), msims, replace = T),]
+  subsp$row = 1:nrow(subsp)
+  sp = dlply(subsp, 'row', function(x) x[,1:2])
+  simorder = as.numeric(morder[i,])
+  
+  print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
+  
+  test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, mcoptions = mcoptions)
+  simdat[[i]] = test
+  runtime = Sys.time()-stime
+  print(paste0('elapsed time: ', runtime))
+}
+
+stopCluster(cl)
+rm(test, sp, subsp)
+
+simdat = unlist(simdat, recursive = F)
+```
+
