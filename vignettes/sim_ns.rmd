@@ -92,8 +92,20 @@ box()
 
 ```
 
-\newpage
+<!-- \newpage -->
 
+<!-- ## Length of deployment by size -->
+```{r, plot_DAL, eval = F}
+# pdat = ddply(as.data.frame(nsfish), .(TagID, Length), .fun=function(x) data.frame(DAL = nrow(x)))
+# 
+# ggplot(pdat, aes(TagID, DAL))+geom_bar(stat = 'identity')
+# 
+# ggplot(as.data.frame(nsfish), aes(Longitude, Latitude, group = TagID, colour = MaxTemp))+geom_point(stat = 'identity')+coord_map()+scale_color_continuous(low = 'lightblue', high = 'red4', na.value = 'white')
+
+```
+
+
+\newpage
 ## Spatial strata in this package
 7-box strata from the Kerr et al. operational model
 
@@ -143,16 +155,6 @@ library(raster)
 library(matlab)
 data(rmask)
 data(woasst)
-sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
-                ,lat = sort(unique(coordinates(rmask[[1]])[,2]))
-                # ,data = as.array(rmask)
-                )
-  sstdata = array(NA, dim = dim(rmask)[c(2,1,3)])
-  for(i in 1:(dim(rmask)[3])) sstdata[,,i] = rot90(as.array(rmask)[,,i],3)
-  # sstmat$data = apply(sstdata, 1:2, sum, na.rm = T)
-
-sstdata[is.na(sstdata)] = 0
-sstmat$data = sstdata
 
 # par(mfrow=c(1,2))
 par(mar = c(2,2,2,4))
@@ -197,6 +199,21 @@ Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen
 \newpage
 
 ```{r, sst_pref_plot, fig.cap = 'Number of months with suitable surface temperature'}
+sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
+                ,lat = sort(unique(coordinates(rmask[[1]])[,2]))
+                # ,data = as.array(rmask)
+                )
+  sstdata = array(NA, dim = dim(rmask)[c(2,1,3)])
+  for(i in 1:(dim(rmask)[3])) sstdata[,,i] = rot90(as.array(rmask)[,,i],3)
+  
+  sstdata[is.na(sstdata)] = 0
+  
+
+# sstmat$data = apply(sstdata, 1:2, sum, na.rm = T)
+
+# sstdata[is.na(sstdata)] = 0
+sstmat$data = sstdata
+
 image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65), col = viridis(12), axes = F)
 plot(map, add=T, col = 'white')
 # world(add=T, col = 'white')
@@ -204,9 +221,27 @@ degAxis(1)
 degAxis(2)
 title('Number of months with suitable surface temperature')
 
+# rm(sstdata, sstdata2)
+
 ```
 
-```{r, sst_pref_plot_12months, fig.cap = 'Number of months with suitable surface temperature'}
+
+```{r, sst_pref_plot_12months, fig.cap = 'Number of months with suitable surface temperature. This plot shows a rolling average where the previous and next months binary values are taken into account. Doing this hedges against simulaied tracks becoming entrained in unllikely areas.'}
+
+sstdata2 = sstdata
+  for(i in 1:12){
+    idx = c(i-1, i, i+1)
+    if(i == 1){ 
+        idx = c(12, 1, 2)
+    }
+    if(i == 12){
+      idx = c(11, 12, 1) 
+    }
+    # else idx = c(i-1, i, i+1)
+    sstdata2[,,i] = apply(sstdata[,,idx], 1:2, sum, na.rm = T)
+  }
+  
+sstmat$data = sstdata2
 
 par(mfrow=c(3,4))
 for(i in 1:12){
@@ -274,6 +309,27 @@ simpar = merge.par(par.ns, d.ns, return.mean = T)
 knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
 ```
 
+## Examine the tag based Advection and Diffusion parameters
+```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day'}
+pdat = ddply(as.data.frame(nsfish), .(TagID), .fun=function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
+names(pdat)[2:4] = c('CFL','D','Dsd')
+
+ggplot(pdat, aes(x=CFL, y=D)) + 
+    geom_errorbar(aes(ymin=D-Dsd, ymax=D+Dsd), colour="black", width=.1) +
+	geom_abline(aes(intercept=mean(D, na.rm=T), slope=0, width = 2),  colour='red')+
+	# geom_abline(aes(intercept=mean(D+Dsd, na.rm=T), slope=0, colour='blue', width = 2))+
+	# geom_abline(aes(intercept=mean(D-Dsd, na.rm=T), slope=0, colour='blue', width = 2))+
+    geom_point( size=3, shape=21, fill="white") + # 21 is filled circle
+	# theme(axis.text.x  = element_blank())+
+    ggtitle(paste0("D distributions for ",nrow(pdat) ," tagged fish") )
+```
+
+```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day'}
+plot.uv.density(par.ns)
+```
+
+\newpage
+
 ## Setup simulation parameters
 
 ```{r, set_simpar, echo = F, eval = T}
@@ -281,7 +337,7 @@ knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulatio
 #------------------------------------------------------------------------#
 # Set number of sims, simulation steps per month and number of years
 
-msims = 25  # simulations to be started in each month
+msims = 50  # simulations to be started in each month
 npmon = 30 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
 #------------------------------------------------------------------------#
@@ -305,6 +361,8 @@ names(morder) = paste0('m',1:12)
 kable(morder, caption = 'Month order for multi-month start simulation', row.names = T)
 ```
 
+\newpage
+
 ## Set up starting points for multi-start month simulation
 
 Set any indices for size or other criteria here. 
@@ -322,6 +380,7 @@ str(spts)
 
 ```
 
+\newpage
 
 ## Run a single simulation in parallel
 
@@ -360,7 +419,9 @@ rm(test, sp, subsp)
 simdat = unlist(simdat, recursive = F)
 ```
 
-## Make a dataframe and raser of results
+\newpage
+
+## Make a dataframe and raster of results
 
 ```{r, simdatdf, eval = T, fig.cap = 'Posterior distribution of simulated tracks; 1-minute cell size'}
 # MAKE A DATA FRAME OF THE RESULTS
