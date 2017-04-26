@@ -18,8 +18,8 @@ output:
 
 
 ```{r, global_options, include=FALSE}
-knitr::opts_chunk$set(echo=FALSE, warning=FALSE, 
-											message=FALSE, cache=TRUE,
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, 
+											message = FALSE, cache = FALSE,
 											progress = TRUE, verbose = FALSE, fig.width = 8, fig.height = 6)
 
 ```	
@@ -226,32 +226,51 @@ title('Number of months with suitable surface temperature')
 ```
 
 
-```{r, sst_pref_plot_12months, fig.cap = 'Number of months with suitable surface temperature. This plot shows a rolling average where the previous and next months binary values are taken into account. Doing this hedges against simulaied tracks becoming entrained in unllikely areas.'}
+```{r, sst_pref_plot_12months, fig.cap = 'Number of months with suitable surface temperature. This plot shows a rolling sum of the current and next months binary values. This assists the simulation avoid entrainment in poor areas while accounting for where the fish might go next.'}
+# 
+# sstdata2 = sstdata
+#   for(i in 1:12){
+#     idx = c(i-1, i, i+1)
+#     if(i == 1){ 
+#         idx = c(12, 1, 2)
+#     }
+#     if(i == 12){
+#       idx = c(11, 12, 1) 
+#     }
+#     # else idx = c(i-1, i, i+1)
+#     sstdata2[,,i] = apply(sstdata[,,idx], 1:2, sum, na.rm = T)
+#   }
+
+sstdata[sstdata==0] = NA
 
 sstdata2 = sstdata
+
   for(i in 1:12){
-    idx = c(i-1, i, i+1)
-    if(i == 1){ 
-        idx = c(12, 1, 2)
-    }
+    idx = c(i, i+1)
+    # if(i == 1){ 
+    #     idx = c(12, 1, 2)
+    # }
     if(i == 12){
-      idx = c(11, 12, 1) 
+      idx = c(12, 1) 
     }
     # else idx = c(i-1, i, i+1)
-    sstdata2[,,i] = apply(sstdata[,,idx], 1:2, sum, na.rm = T)
+    sstdata2[,,i] = apply(sstdata[,,idx], 1:2, sum, na.rm = T)+sstdata[,,i]
   }
-  
+
+sstdata2[is.na(sstdata2)] = 0  
 sstmat$data = sstdata2
 
 par(mfrow=c(3,4))
 for(i in 1:12){
-  par(mar=c(1,1,2,1))
-image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim = c(-100, 40), ylim = c(0,65), col = hsv(.28, .9, .5, alpha = .5), axes = F)
-plot(map, add=T, col = 'white')
+  par(mar=c(1,1,2,5))
+plot(map, add=F, col = 'white', xlim = c(-100, 40), ylim = c(0,65), axes = F)
+image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim = c(-100, 40), ylim = c(0,65),  col = viridis(max(sstmat$data[,,i])+1), axes = F, add=T)
+plot(map, add=T, col = 'white', axes = F)
+image.plot(sstmat$data[,,i], legend.only = T, col = viridis(max(sstmat$data[,,i])+1), nlevel = 3)
 box()
 # world(add=T, col = 'white')
-# degAxis(1)
-# degAxis(2)
+degAxis(1)
+degAxis(2)
 # degAxis(1, tck = 0.02, las = 2, hadj = -1)
 # degAxis(2, tck = 0.02, las = 1, hadj = -1)
 title(month.name[i])
@@ -309,8 +328,11 @@ simpar = merge.par(par.ns, d.ns, return.mean = T)
 knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
 ```
 
+\newpage
+
 ## Examine the tag based Advection and Diffusion parameters
 ```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day'}
+
 pdat = ddply(as.data.frame(nsfish), .(TagID), .fun=function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
 names(pdat)[2:4] = c('CFL','D','Dsd')
 
@@ -323,6 +345,8 @@ ggplot(pdat, aes(x=CFL, y=D)) +
 	# theme(axis.text.x  = element_blank())+
     ggtitle(paste0("D distributions for ",nrow(pdat) ," tagged fish") )
 ```
+
+\newpage
 
 ```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day'}
 plot.uv.density(par.ns)
@@ -340,9 +364,10 @@ plot.uv.density(par.ns)
 msims = 50  # simulations to be started in each month
 npmon = 30 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
+sstol = 3 # number of suitable months for each daily simulation step
 #------------------------------------------------------------------------#
 
-simvals = data.frame(sim_param = c('msims','npmon','nyears'), value = c(25, 30, 2), description = c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track'))
+simvals = data.frame(sim_param = c('msims','npmon','nyears','sstol'), value = c(msims, npmon, nyears, sstol), description = c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track','number of suitable months for each daily simulation step'))
 
 kable(simvals, caption = "Control parameters for simulation")
 
@@ -407,7 +432,7 @@ for(i in 1:12){
   
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
-  test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, mcoptions = mcoptions)
+  test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
   simdat[[i]] = test
   runtime = Sys.time()-stime
   print(paste0('elapsed time: ', runtime))
@@ -460,5 +485,19 @@ for(i in 1:4){
   box()
 }
 
+```
+\newpage
+
+## Get seasonal transition matrices using the 11 box model
+
+```{r, get_transmat, eval = T}
+
+# try new version of function... it works!!
+datbox = get.first.box(simdat, 2000, box11)
+boxtrans = get.trans.prob(datbox, nyears=100, adims = c(11,11,4))
+
+names(boxtrans) = seasons
+
+plot.boxtrans(boxtrans)
 ```
 
