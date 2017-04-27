@@ -247,13 +247,13 @@ sstdata2 = sstdata
 
   for(i in 1:12){
     idx = c(i, i+1)
-    # if(i == 1){ 
-    #     idx = c(12, 1, 2)
-    # }
-    if(i == 12){
-      idx = c(12, 1) 
+    if(i == 1){
+        idx = c(12, 1, 2)
     }
-    # else idx = c(i-1, i, i+1)
+    if(i == 12){
+      idx = c(11, 12, 1) 
+    }
+    else idx = c(i-1, i, i+1)
     sstdata2[,,i] = apply(sstdata[,,idx], 1:2, sum, na.rm = T)+sstdata[,,i]
   }
 
@@ -364,7 +364,7 @@ plot.uv.density(par.ns)
 msims = 50  # simulations to be started in each month
 npmon = 30 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
-sstol = 3 # number of suitable months for each daily simulation step
+sstol = 2 # number of suitable months for each daily simulation step
 #------------------------------------------------------------------------#
 
 simvals = data.frame(sim_param = c('msims','npmon','nyears','sstol'), value = c(msims, npmon, nyears, sstol), description = c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track','number of suitable months for each daily simulation step'))
@@ -494,7 +494,7 @@ for(i in 1:4){
 
 # try new version of function... it works!!
 datbox = get.first.box(simdat, 2000, box11)
-boxtrans = get.trans.prob(datbox, nyears=100, adims = c(11,11,4))
+boxtrans = get.trans.prob(datbox, nyears=100, adims = c(11,11,4), perc = F)
 
 names(boxtrans) = seasons
 
