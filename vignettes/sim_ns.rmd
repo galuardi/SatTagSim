@@ -204,6 +204,18 @@ sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
                 # ,data = as.array(rmask)
                 )
   sstdata = array(NA, dim = dim(rmask)[c(2,1,3)])
+
+#------------------------------------#  
+# mask out gomex in summer, GSL in winter
+  
+  for(i in 7:9){
+   rmask[[i]] = mask(rmask[[i]], box11[1,], inverse = T)
+  }
+  for(i in 1:3){
+   rmask[[i]] = mask(rmask[[i]], box11[3,], inverse = T)
+  }
+#------------------------------------#  
+  
   for(i in 1:(dim(rmask)[3])) sstdata[,,i] = rot90(as.array(rmask)[,,i],3)
   
   sstdata[is.na(sstdata)] = 0
