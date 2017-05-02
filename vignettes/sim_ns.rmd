@@ -45,18 +45,20 @@ map = rworldmap::getMap(resolution = 'high')
 ## Tag data:
 ```{r, plot_tags, fig.width = 9, fig.height = 6}
 par(mar = c(3,3,3,6))
-plot(nsfish, col = month.colors[nsfish$Month,2], pch = 19, cex = .6, ylim = c(20, 50), xlim = c(-100, 0))
+plot(nsfish, col = 1, pch = 19, cex = .6, ylim = c(20, 50), xlim = c(-100, 0))
+sapply(1:12, function(x) points(nsfish[nsfish$Month==x,1:2], col = month.colors[x==month.colors[,1],2], pch = 19))
+
 plot(map, add=T, col = 'cornsilk4', fill=T)
 degAxis(1)
 degAxis(2)
 box()
- .add.month.scale()
+ analyzepsat::.add.month.scale()
 ```
 
 \newpage
 
 
-```{r}
+```{r, eval = F}
 # length of deployments
 ddply(as.data.frame(nsfish), c('TagID'), function(x) data.frame(nmonths = length(unique(x$Month))))
 ```
@@ -332,6 +334,20 @@ for(i in 1:12){
 ## Get parameters from tag data
 
 ```{r, get_params, echo = T}
+
+#-----------------------------------------------------------------#
+# add spatial overlay to tag data
+nsfish@proj4string = box11@proj4string
+nsfish$box = over(nsfish, box11)$ID
+par2 = daply(as.data.frame(nsfish), c('box', 'TagID', 'Month'), function(x) get.uv(x[,c('Day','Month','Year','Longitude','Latitude')]))
+
+tagwts = daply(as.data.frame(nsfish), c('box', 'Month'), function(x) nrow(x))
+
+ubox = apply(par2[,,,1], 3, rowMeans, na.rm=T)*-1
+vbox = apply(par2[,,,2], 3, rowMeans, na.rm=T)
+
+#-----------------------------------------------------------------#
+
 par.ns = get.allpar(as.data.frame(nsfish))
 d.ns = get.kfD(as.data.frame(nsfish))
 simpar = merge.par(par.ns, d.ns, return.mean = T)
