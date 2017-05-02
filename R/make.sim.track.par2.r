@@ -63,6 +63,15 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
       # mask$data[xidx, yidx]
     }
 
+    find.next.sst <- function(lon, lat, sstdf, sstol) {
+      # sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,8]))
+      which(sstdf[,3]>= sstol)
+      gidx = which(sstdf[,3]>= sstol)
+      geosphere::distGeo(msp, sstdf[gidx,1:2])
+      idxmin = which.min(geosphere::distGeo(msp, sstdf[gidx,1:2]))
+      sstdf[gidx[idxmin],1:2]
+    }
+
     temp = NULL #cbind(c(sp, morder[1]))  # object will be the simulated track
     # names(temp) = c('lon,','lat','Month')
     if(!is.null(bath)){
@@ -114,21 +123,25 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
         #   							tidx = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
         # 						    t1 = as.numeric(tsamp[sample(which(!is.na(tidx)), 1),])
         if(!is.null(sstmat)){
+          # ii = 100
+          sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
           if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
             # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
-            t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
+            # t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
 
-             tsamp = t(sapply((rep(2, 100)),function(x) SatTagSim::simm.kf(x, u, v, D, msp)[2,]))
-            tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
-            tidx = which(tval>=sstol)
+            ### Miminum distance
+            tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol)
 
-              if(length(tidx) == 0){
-                tsamp = t(sapply((rep(2, 100)),function(x) SatTagSim::simm.kf(x, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]))
-                          tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
-                          tidx = which(tval>=sstol)
-              }
+#              tsamp = t(sapply((rep(2, 0+ii)),function(x) SatTagSim::simm.kf(x, u, v, D, msp)[2,]))
+#             tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
+#             tidx = which(tval>=sstol)
+#
+#               if(length(tidx) == 0){
+#                 tsamp = t(sapply((rep(2, 0+ii)),function(x) SatTagSim::simm.kf(x, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]))
+#                           tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
+#                           tidx = which(tval>=sstol)
+#               }
 
-            t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
             #   							ttmp = cbind(rep(t1[1], 100), rep(t1[2], 100))
             # 						    tsamp = t(apply(ttmp, 1, function(x)
             # 						          simm.kf(n = 2, sp = as.numeric(x), u = u, v = v, D = D)[2,]))
@@ -136,7 +149,10 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
             #   							tidx = which(tval>=3)
             # 						    t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
             # break
+            # ii = ii+100
           }
+          # t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
+          t1 = as.numeric(tsamp)
         }
 
         if(!is.null(bath)){
