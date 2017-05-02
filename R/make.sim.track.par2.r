@@ -125,6 +125,7 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
         if(!is.null(sstmat)){
           # ii = 100
           sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
+
           if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
             # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
             # t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
