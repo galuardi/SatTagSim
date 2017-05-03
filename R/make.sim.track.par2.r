@@ -17,7 +17,7 @@
 #' @author Benjamin Galuardi
 #' @examples
 #' see vignette
-make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = bath, sstmat = sstmat, seaslen = 30, sstol = 2, mcoptions = setup.parallel(), ...)
+make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spts, bath = bath, sstmat = sstmat, rasbox = rasbox, seaslen = 30, sstol = 2, mcoptions = setup.parallel(), ...)
 
   foreach(i = sp, .options.multicore = mcoptions) %dopar% #
 
@@ -87,10 +87,33 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
     # msp = sp
 
     for(seas in morder){   # winter, spring, summer, fall
-      midx = tpar$Month==seas
-      u = c(tpar[midx, 2], tpar[1, 5])*uvmult
-      v = c(tpar[midx, 3], tpar[1, 6])*uvmult
-      D = c(tpar[midx, 4], tpar[1, 7])*uvmult
+
+      # browser()
+
+      # midx = tpar$Month==seas
+      # u = c(tpar[midx, 2], tpar[1, 5])*uvmult
+      # v = c(tpar[midx, 3], tpar[1, 6])*uvmult
+      # D = c(tpar[midx, 4], tpar[1, 7])*uvmult
+      # Dorig = D
+      # uorig = u
+      # vorig = v
+      msps = SpatialPoints(t(as.matrix(msp)))
+      tbox = raster::extract(rasbox, msps)
+      parbox = as.numeric(attributes(par_array)$dimnames[[1]])
+
+      pbidx = which(parbox==tbox)
+
+      u = c(par_array[pbidx, seas, 1])*uvmult
+      v = c(par_array[pbidx, seas, 2])*uvmult
+      D = c(par_array[pbidx, seas, 3])*uvmult
+      usd = c(par_array[pbidx, seas, 4])
+      vsd = c(par_array[pbidx, seas, 5])
+      Dsd = c(par_array[pbidx, seas, 6])
+
+      u = c(u, usd)
+      v = c(v, vsd)
+      D = c(D, Dsd)
+
       Dorig = D
       uorig = u
       vorig = v
@@ -102,8 +125,26 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
 
       #	seaslen = seaslen  # the first seas simulated will start at the midpoint of that season, not the beginning.
 
-      for(j in 1:seaslen) {
+    for(j in 1:seaslen) {
         t1 = SatTagSim::simm.kf(2, u, v, D, msp)[2,]
+
+        t1s = SpatialPoints(t(as.matrix(t1)))
+        tbox = raster::extract(rasbox, t1s)
+        parbox = as.numeric(attributes(par_array)$dimnames[[1]])
+
+        pbidx = parbox[parbox==tbox]
+
+        u = c(par_array[pbidx, seas, 1])*uvmult
+        v = c(par_array[pbidx, seas, 2])*uvmult
+        D = c(par_array[pbidx, seas, 3])*uvmult
+        usd = c(par_array[pbidx, seas, 4])
+        vsd = c(par_array[pbidx, seas, 5])
+        Dsd = c(par_array[pbidx, seas, 6])
+
+        u = c(u, usd)
+        v = c(v, vsd)
+        D = c(D, Dsd)
+
         # else{
         # ii = 1
         # while(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
@@ -128,7 +169,7 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
           sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
 
           if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
-            print(paste0(month.name[seas], 'day ', j))
+            # print(paste0(month.name[seas], 'day ', j))
             # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
             # t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
 
@@ -177,6 +218,7 @@ make.sim.track.par2 <- function(tpar = tpar, morder = morder, sp = spts, bath = 
         # }
         temp = rbind(temp,  cbind(t(t1), seas))
         msp = ifelse(is.na(t1), msp, t1)
+        # lines(temp[,1:2], col = 2)
       }
     }
     # }
