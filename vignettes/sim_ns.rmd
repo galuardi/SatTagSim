@@ -462,7 +462,7 @@ for(i in 1){
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
   # test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
-    test = make.sim.track.par2(par_array = par_array, rasbox = rasbox, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
+    test = make.sim.track.par2(par_array = par_array, rasbox = rasbox, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
   simdat[[i]] = test
   runtime = Sys.time()-stime
   print(paste0('elapsed time: ', runtime))

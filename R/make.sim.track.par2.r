@@ -17,7 +17,7 @@
 #' @author Benjamin Galuardi
 #' @examples
 #' see vignette
-make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spts, bath = bath, sstmat = sstmat, rasbox = rasbox, seaslen = 30, sstol = 2, mcoptions = setup.parallel(), ...)
+make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp = spts, bath = bath, sstmat = sstmat, rasbox = rasbox, seaslen = 30, sstol = 2, mcoptions = setup.parallel(), ...)
 
   foreach(i = sp, .options.multicore = mcoptions) %dopar% #
 
@@ -73,7 +73,7 @@ make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spt
       sstdf[gidx[idxmin],1:2]
     }
 
-    temp = NULL #cbind(c(sp, morder[1]))  # object will be the simulated track
+
     # names(temp) = c('lon,','lat','Month')
     if(!is.null(bath)){
       msp = getsp(i, bath = bath)
@@ -82,14 +82,19 @@ make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spt
     }
     uvmult = 30/seaslen
 
+    # object will be the simulated track
+    temp = NULL
+
     # for(n in 1:nrow(sp)){
 
     # msp = sp
 
-    for(seas in morder){   # winter, spring, summer, fall
+  for(seas in simorder){   # winter, spring, summer, fall
 
       # browser()
-
+    if(!is.null(sstmat)){
+      sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
+    }
       # midx = tpar$Month==seas
       # u = c(tpar[midx, 2], tpar[1, 5])*uvmult
       # v = c(tpar[midx, 3], tpar[1, 6])*uvmult
@@ -97,6 +102,10 @@ make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spt
       # Dorig = D
       # uorig = u
       # vorig = v
+
+
+    for(j in 1:seaslen) {
+
       msps = SpatialPoints(t(as.matrix(msp)))
       tbox = raster::extract(rasbox, msps)
       parbox = as.numeric(attributes(par_array)$dimnames[[1]])
@@ -118,33 +127,26 @@ make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spt
       uorig = u
       vorig = v
 
-      # setup an sst dataframe for minimizing distance to non-NA area
-      # 		xyz = cbind(expand.grid(sstmat$lon, sstmat$lat), as.vector(t(sstmat$data[,,seas])))
-      #     names(xyz) = c('x','y','z')
-      #     gidx = which(!is.na(xyz[[seas]]$z))
 
-      #	seaslen = seaslen  # the first seas simulated will start at the midpoint of that season, not the beginning.
-
-    for(j in 1:seaslen) {
         t1 = SatTagSim::simm.kf(2, u, v, D, msp)[2,]
-
-        t1s = SpatialPoints(t(as.matrix(t1)))
-        tbox = raster::extract(rasbox, t1s)
-        parbox = as.numeric(attributes(par_array)$dimnames[[1]])
-
-        pbidx = parbox[parbox==tbox]
-
-        u = c(par_array[pbidx, seas, 1])*uvmult
-        v = c(par_array[pbidx, seas, 2])*uvmult
-        D = c(par_array[pbidx, seas, 3])*uvmult
-        usd = c(par_array[pbidx, seas, 4])
-        vsd = c(par_array[pbidx, seas, 5])
-        Dsd = c(par_array[pbidx, seas, 6])
-
-        u = c(u, usd)
-        v = c(v, vsd)
-        D = c(D, Dsd)
-
+#
+#         t1s = SpatialPoints(t(as.matrix(t1)))
+#         tbox = raster::extract(rasbox, t1s)
+#         parbox = as.numeric(attributes(par_array)$dimnames[[1]])
+#
+#         pbidx = parbox[parbox==tbox]
+#
+#         u = c(par_array[pbidx, seas, 1])*uvmult
+#         v = c(par_array[pbidx, seas, 2])*uvmult
+#         D = c(par_array[pbidx, seas, 3])*uvmult
+#         usd = c(par_array[pbidx, seas, 4])
+#         vsd = c(par_array[pbidx, seas, 5])
+#         Dsd = c(par_array[pbidx, seas, 6])
+#
+#         u = c(u, usd)
+#         v = c(v, vsd)
+#         D = c(D, Dsd)
+#
         # else{
         # ii = 1
         # while(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
@@ -166,7 +168,7 @@ make.sim.track.par2 <- function(par_array = par_array, morder = morder, sp = spt
         # 						    t1 = as.numeric(tsamp[sample(which(!is.na(tidx)), 1),])
         if(!is.null(sstmat)){
           # ii = 100
-          sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
+          # sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
 
           if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
             # print(paste0(month.name[seas], 'day ', j))

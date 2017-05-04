@@ -1,6 +1,6 @@
 # make raster from box structure for inline query during simulation
 
-rasbox = raster(box11, nrow = 26, ncol = 29)
+rasbox = raster(box11, nrow = 26*5, ncol = 29*5)
 extent(rasbox) = extent(box11)
 # values(rasbox) = box11@data$ID
 
