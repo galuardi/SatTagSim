@@ -23,9 +23,24 @@ degAxis(2)
 
 nsfish@proj4string = box11@proj4string
 nsfish$box = over(nsfish, box11)$ID
+
+missing = (1:11)%in%unique(nsfish$box)
+
 par2 = daply(as.data.frame(nsfish), c('box', 'TagID', 'Month'), function(x) get.uv(x[,c('Day','Month','Year','Longitude','Latitude')]))
+pnames = dimnames(par2)
+pnames$box = as.character(1:11)
+par_test = array(NA, dim = c(11, dim(par2)[2:4]), dimnames = pnames)
+par_test[missing,,,] = par2
+par2 = par_test
+rm(par_test)
 
 tagwts = daply(as.data.frame(nsfish), c('box', 'Month'), function(x) nrow(x))
+pnames = dimnames(tagwts)
+pnames$box = as.character(1:11)
+tw2 = array(NA, dim = c(11, dim(tagwts)[2]), dimnames = pnames)
+tw2[missing,] = tagwts
+tagwts = tw2
+rm(tw2)
 
 # advection
 ubox = apply(par2[,,,1], 3, rowMeans, na.rm=T)*-1
@@ -48,6 +63,17 @@ d_month_box = ddply(as.data.frame(nsfish), 'box', get.kfD)
 
 dbox = daply(d_month_box, c('box', 'Month'), function(x) mean(x$D))
 dbox_sd = daply(d_month_box, c('box', 'Month'), function(x) sd(x$D))
+pnames = dimnames(dbox)
+pnames$box = as.character(1:11)
+par_test = array(NA, dim = c(11, dim(dbox)[2]), dimnames = pnames)
+par_test[missing,] = dbox
+dbox = par_test
+
+par_test = array(NA, dim = c(11, dim(dbox)[2]), dimnames = pnames)
+par_test[missing,] = dbox_sd
+dbox_sd = par_test
+
+rm(par_test)
 
 for(i in 1:ncol(dbox)) dbox[is.na(dbox[,i]),i] = stats::weighted.mean(dbox[,i], w = tagwts[,i], na.rm = T)
 

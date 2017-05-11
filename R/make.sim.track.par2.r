@@ -63,14 +63,22 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       # mask$data[xidx, yidx]
     }
 
-    find.next.sst <- function(lon, lat, sstdf, sstol) {
+    find.next.sst <- function(lon, lat, sstdf, sstol, expand = 10) {
       # sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,8]))
-      which(sstdf[,3]>= sstol)
+      # which(sstdf[,3]>= sstol)
+      names(sstdf) = c('lon','lat','sst')
+
+      xlim = c(lon-expand, lon+expand)
+      ylim = c(lat-expand, lat+expand)
+      xidx  = sstdf$lon>=xlim[1]&sstdf$lon<=xlim[2]
+      yidx  = sstdf$lat>=ylim[1]&sstdf$lat<=ylim[2]
+      xyidx = which((xidx+yidx)==2)
       pt = c(lon, lat)
-      gidx = which(sstdf[,3]>= sstol)
-      geosphere::distGeo(pt, sstdf[gidx,1:2])
-      idxmin = which.min(geosphere::distGeo(pt, sstdf[gidx,1:2]))
-      sstdf[gidx[idxmin],1:2]
+      sstdf_sub = sstdf[xyidx, ]
+      gidx = which(sstdf_sub[, 3]>= sstol)
+      geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
+      idxmin = which.min(geosphere::distGeo(pt, sstdf_sub[gidx,1:2]))
+      sstdf_sub[gidx[idxmin],1:2]
     }
 
 
@@ -92,9 +100,9 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
   for(seas in simorder){   # winter, spring, summer, fall
 
       # browser()
-    if(!is.null(sstmat)){
-      sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
-    }
+    # if(!is.null(sstmat)){
+    #   sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
+    # }
       # midx = tpar$Month==seas
       # u = c(tpar[midx, 2], tpar[1, 5])*uvmult
       # v = c(tpar[midx, 3], tpar[1, 6])*uvmult
@@ -167,44 +175,43 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
         #   							tidx = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
         # 						    t1 = as.numeric(tsamp[sample(which(!is.na(tidx)), 1),])
         if(!is.null(sstmat)){
-          # ii = 100
-          # sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
-
           if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
-            # print(paste0(month.name[seas], 'day ', j))
-            # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
+            tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol)
+            t1 = as.numeric(tsamp)
+                        # print(paste0(month.name[seas], 'day ', j))
+                        # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
             # t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
 
-            ### Miminum distance
-            tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol)
-            # tsamp2 = as.data.frame(rbind(c(1,1,2001,t1), c(1,1+uvmult,2001, as.numeric(tsamp))))
-            # print(tsamp2)
-            # newpar = get.uv(tsamp2)
-            # print(newpar)
-            # t1 = SatTagSim::simm.kf(2, u = c(newpar[1], 0), v = c(newpar[2], 0), D, tsamp2[1,4:5])[2,]
-            # print(t1)
-            t1 = as.numeric(tsamp)
-#              tsamp = t(sapply((rep(2, 0+ii)),function(x) SatTagSim::simm.kf(x, u, v, D, msp)[2,]))
-#             tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
-#             tidx = which(tval>=sstol)
-#
-#               if(length(tidx) == 0){
-#                 tsamp = t(sapply((rep(2, 0+ii)),function(x) SatTagSim::simm.kf(x, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]))
-#                           tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
-#                           tidx = which(tval>=sstol)
-#               }
+                        ### Miminum distance
 
-            #   							ttmp = cbind(rep(t1[1], 100), rep(t1[2], 100))
-            # 						    tsamp = t(apply(ttmp, 1, function(x)
-            # 						          simm.kf(n = 2, sp = as.numeric(x), u = u, v = v, D = D)[2,]))
-            #   							tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat))
-            #   							tidx = which(tval>=3)
-            # 						    t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
-            # break
-            # ii = ii+100
+                        # tsamp2 = as.data.frame(rbind(c(1,1,2001,t1), c(1,1+uvmult,2001, as.numeric(tsamp))))
+                        # print(tsamp2)
+                        # newpar = get.uv(tsamp2)
+                        # print(newpar)
+                        # t1 = SatTagSim::simm.kf(2, u = c(newpar[1], 0), v = c(newpar[2], 0), D, tsamp2[1,4:5])[2,]
+                        # print(t1)
+
+                        #              tsamp = t(sapply((rep(2, 0+ii)),function(x) SatTagSim::simm.kf(x, u, v, D, msp)[2,]))
+                        #             tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
+                        #             tidx = which(tval>=sstol)
+                        #
+                        #               if(length(tidx) == 0){
+                        #                 tsamp = t(sapply((rep(2, 0+ii)),function(x) SatTagSim::simm.kf(x, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]))
+                        #                           tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
+                        #                           tidx = which(tval>=sstol)
+                        #               }
+
+                        #   							ttmp = cbind(rep(t1[1], 100), rep(t1[2], 100))
+                        # 						    tsamp = t(apply(ttmp, 1, function(x)
+                        # 						          simm.kf(n = 2, sp = as.numeric(x), u = u, v = v, D = D)[2,]))
+                        #   							tval = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat))
+                        #   							tidx = which(tval>=3)
+                        # 						    t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
+                        # break
+                        # ii = ii+100
           }
-          # t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
-          # t1 = as.numeric(tsamp)
+                        # t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
+                        # t1 = as.numeric(tsamp)
         }
 
         if(!is.null(bath)){
@@ -226,6 +233,7 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
     # }
     tsim = as.data.frame(temp)
     names(tsim) = c('lon,','lat','Month')
+    # lines(tsim[,1:2])
     tsim
   }
 
