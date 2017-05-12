@@ -453,7 +453,7 @@ ncores = detectCores()
 cl = makeCluster(ncores)
 registerDoParallel(cl, cores = ncores)
 
-for(i in 1){
+for(i in 4:6){
   subsp = spts[[i]][sample(1:nrow(spts[[i]]), msims, replace = T),]
   subsp$row = 1:nrow(subsp)
   sp = dlply(subsp, 'row', function(x) x[,1:2])
@@ -462,7 +462,7 @@ for(i in 1){
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
   # test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
-    test = make.sim.track.par2(par_array = par_array, rasbox = rasbox, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
+    test = make.sim.track.par2(par_array = par_array, boxmat = boxmat, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
   simdat[[i]] = test
   runtime = Sys.time()-stime
   print(paste0('elapsed time: ', runtime))

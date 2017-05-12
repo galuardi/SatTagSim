@@ -32,7 +32,7 @@
 #' plot(simm.kf(n = 1000, u = c(10,1), v = c(0,1), D = c(10,1), sp = c(-70,40)), typ = 'o', pch = 19, col =3, xlab = 'lon', ylab = 'lat')
 #' plot(simm.kf(n = 1000, u = c(0,0), v = c(0,0), D = c(5000,1000), sp = c(-70,40)), typ = 'o', pch = 19, col =4, xlab = 'lon', ylab = 'lat')
 #'
-simm.kf <- function(n=100, u=c(0,1), v=c(0,1), D=c(100,50), sp=c(-70,40)){
+simm.kf <- function(n=100, u=c(0,1), v=c(0,1), D=c(100,50), sp=c(-70,40), ulim = c(-50,50), vlim = c(-50,50), Dlim = c(0, 5000)){
 # 	require(MASS)
 # 	require(truncnorm)
 
@@ -48,9 +48,9 @@ simm.kf <- function(n=100, u=c(0,1), v=c(0,1), D=c(100,50), sp=c(-70,40)){
 
 	## changed 1-7-14. u v and D are now in nm to start with.
 	# Di = rtruncnorm(1, a=0, b=5000, mean = D[1], sd = D[2])
-	Di = rtruncnorm(n, a=0, b=5000, mean = D[1], sd = D[2])
-	ui = rtruncnorm(n, a=-50, b=50, mean = u[1], sd = u[2])
-	vi = rtruncnorm(n, a=-50, b=50, mean = v[1], sd = v[2])
+	Di = rtruncnorm(n, a = Dlim[1], b = Dlim[2], mean = D[1], sd = D[2])
+	ui = rtruncnorm(n, a = ulim[1], b = ulim[2], mean = u[1], sd = u[2])
+	vi = rtruncnorm(n, a = vlim[1], b = vlim[2], mean = v[1], sd = v[2])
 
 	Q = matrix(c(2*Di[1], 0, 0, 2*Di[1]),2,2)
 	# Q = matrix(c(0, 2*Di[1], 2*Di[1],0 ),2,2)

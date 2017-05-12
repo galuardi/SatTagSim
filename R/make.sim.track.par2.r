@@ -17,7 +17,7 @@
 #' @author Benjamin Galuardi
 #' @examples
 #' see vignette
-make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp = spts, bath = bath, sstmat = sstmat, rasbox = rasbox, seaslen = 30, sstol = 2, mcoptions = setup.parallel(), ...)
+make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp = spts, bath = bath, sstmat = sstmat, boxmat = boxmat, seaslen = 30, sstol = 2, mcoptions = setup.parallel(), ...)
 
   foreach(i = sp, .options.multicore = mcoptions) %dopar% #
 
@@ -76,9 +76,13 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       pt = c(lon, lat)
       sstdf_sub = sstdf[xyidx, ]
       gidx = which(sstdf_sub[, 3]>= sstol)
-      geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
-      idxmin = which.min(geosphere::distGeo(pt, sstdf_sub[gidx,1:2]))
-      sstdf_sub[gidx[idxmin],1:2]
+      if(length(gidx) > 0){
+        # geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
+        idxmin = which.min(geosphere::distGeo(pt, sstdf_sub[gidx,1:2]))
+        sstdf_sub[gidx[idxmin],1:2]
+      }else{
+        c(lon, lat)
+        }
     }
 
 
@@ -100,9 +104,9 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
   for(seas in simorder){   # winter, spring, summer, fall
 
       # browser()
-    # if(!is.null(sstmat)){
-    #   sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
-    # }
+    if(!is.null(sstmat)){
+      sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,seas]))
+    }
       # midx = tpar$Month==seas
       # u = c(tpar[midx, 2], tpar[1, 5])*uvmult
       # v = c(tpar[midx, 3], tpar[1, 6])*uvmult
@@ -114,10 +118,15 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
 
     for(j in 1:seaslen) {
 
-      msps = SpatialPoints(t(as.matrix(msp)))
-      tbox = raster::extract(rasbox, msps)
-      parbox = as.numeric(attributes(par_array)$dimnames[[1]])
+      # msps = SpatialPoints(t(as.matrix(msp)))
+      # tbox = raster::extract(rasbox, msps)
 
+
+      xidx = which.min((msp[1] - boxmat$lon)^2)
+      yidx = which.min((msp[2] - boxmat$lat)^2)
+      tbox = boxmat$box[xidx, yidx]
+
+      parbox = as.numeric(attributes(par_array)$dimnames[[1]])
       pbidx = which(parbox==tbox)
 
       u = c(par_array[pbidx, seas, 1])*uvmult
@@ -135,8 +144,11 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       uorig = u
       vorig = v
 
+      ulim = c(-50, 50)*uvmult
+      vlim = c(-50, 50)*uvmult
+      Dlim = c(0, 5000)*uvmult
 
-        t1 = SatTagSim::simm.kf(2, u, v, D, msp)[2,]
+      t1 = SatTagSim::simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2,]
 #
 #         t1s = SpatialPoints(t(as.matrix(t1)))
 #         tbox = raster::extract(rasbox, t1s)
@@ -175,9 +187,13 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
         #   							tidx = apply(tsamp, 1, function(y) get.sst.mask.val(y[1], y[2], sstmat, seas))
         # 						    t1 = as.numeric(tsamp[sample(which(!is.na(tidx)), 1),])
         if(!is.null(sstmat)){
-          if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
-            tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol)
+
+          ii=1
+
+          while((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
+            tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol, expand = 5*ii)
             t1 = as.numeric(tsamp)
+            ii = ii+1
                         # print(paste0(month.name[seas], 'day ', j))
                         # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
             # t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
@@ -216,7 +232,7 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
 
         if(!is.null(bath)){
           while(.get.bath(t1[1], t1[2], bath)>0){
-            t1 = simm.kf(2, u, v, D, msp)[2,]
+            t1 = simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2,]
           }
         }
         # if(ii>5) break

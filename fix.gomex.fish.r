@@ -10,8 +10,15 @@ rasbox = rasterize(box11, rasbox, 'ID')
 rasbox[cellFromXY(rasbox, c(-2.5, 42.5))] = 8
 rasbox[cellFromXY(rasbox, c(-2.5, 45.5))] = 8
 
+# make a matrix for speed
+boxmat = list()
+boxmat$lon = unique(coordinates(rasbox)[,1])
+boxmat$lat = sort(unique(coordinates(rasbox)[,2]))
+boxmat$box = t(as.matrix(flip(rasbox, 2)))
+
+
 plot(box11, add=F, border = 'salmon')
-image(seq(-100, 45, length = 29), seq(-50, 80, length = 26), rot90(as.array(rasbox)[,,1], 3), col = tim.colors(12), add=T)
+image(seq(-100, 45, length = dim(rasbox)[2]), seq(-50, 80, length = dim(rasbox)[1]), rot90(as.array(rasbox)[,,1], 3), col = tim.colors(12), add=T)
 grid(nx = 29, ny = 26)
 plot(map , add=T)
 plot(box11, add=T, border = 'salmon')
