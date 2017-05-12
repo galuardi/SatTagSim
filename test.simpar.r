@@ -64,16 +64,12 @@ for(i in 1:50){
       if(!is.null(sstmat)){
 
       ii=1
-      if((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
-        t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp, ulim, vlim, Dlim)[2,]
-        # tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol, expand = 5*ii)
-        # t1 = as.numeric(tsamp)
           while((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
               tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol, expand = 5*ii)
               t1 = as.numeric(tsamp)
               ii = ii+1
           }
-      }
+      # }
 
       if(!is.null(bath)){
         while(.get.bath(t1[1], t1[2], bath)>0){
@@ -110,5 +106,49 @@ month.colors = data.frame(Month = as.numeric(month.colors[,1]), color = as.chara
 simdat = lapply(simdat, function(x) merge(x, month.colors, by = 'Month')[,c('lon,','lat','Month', 'color')])
 
 lapply(simdat, function(x) lines(x[,1], x[,2], col = as.character(x$color), typ ='o', pch = 19, cex = .4))
+
+
+#-----------------------------------------------------#
+# Possibly change functions for speed... does not work yet
+
+mydist = function(p1, p2){
+
+  deg2rad <- function(deg) return(deg * pi/180)
+  rad2deg <- function(rad) return(rad/pi * 180)
+  myzinv <- function(x) deg2rad(x) * 6371/1.852
+  myz <- function(x) rad2deg(x * 1.852/6371)
+
+  p1 = myzinv(p1)
+  p2 = myzinv(p2)
+
+  a2 = (p2[1]-p1[1])^2
+  b2 = (p2[2]-p1[2])^2
+  c = sqrt(a2+b2)
+  c
+}
+
+find.next.sst <- function(lon, lat, sstdf, sstol, expand = 10) {
+  # sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,8]))
+  # which(sstdf[,3]>= sstol)
+  names(sstdf) = c('lon','lat','sst')
+
+  xlim = c(lon-expand, lon+expand)
+  ylim = c(lat-expand, lat+expand)
+  xidx  = sstdf$lon>=xlim[1]&sstdf$lon<=xlim[2]
+  yidx  = sstdf$lat>=ylim[1]&sstdf$lat<=ylim[2]
+  xyidx = which((xidx+yidx)==2)
+  pt = c(lon, lat)
+  sstdf_sub = sstdf[xyidx, ]
+  gidx = which(sstdf_sub[, 3]>= sstol)
+  if(length(gidx) > 0){
+    # geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
+    idxmin = which.min(mydist(pt, sstdf_sub[gidx,1:2]))
+    sstdf_sub[gidx[idxmin],1:2]
+  }else{
+    c(lon, lat)
+  }
+}
+
+which.min(mydist(msp, as.data.frame(coordinates(rasbox))))
 
 
