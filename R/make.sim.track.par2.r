@@ -190,10 +190,17 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
 
           ii=1
 
+        # First, try reversing the advective space.
+          if(get.sst.mask.val(t1[1], t1[2], sstmat, seas) < sstol){
+            t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp, ulim, vlim, Dlim)[2,]
+            t1 = as.numeric(t1)
+          }
+        # Secondly, try using a minimum distance algorithm. This is slow..
           while((get.sst.mask.val(t1[1], t1[2], sstmat, seas)) < sstol){
             tsamp = find.next.sst(t1[1], t1[2], sstdf, sstol, expand = 5*ii)
             t1 = as.numeric(tsamp)
             ii = ii+1
+          }
                         # print(paste0(month.name[seas], 'day ', j))
                         # if(is.na(get.sst.mask.val(t1[1], t1[2], sstmat, seas))){
             # t1 = SatTagSim::simm.kf(2, u = c(-1*u[1], u[2]), v = c(-1*v[1], v[2]), D = c(D[1], 1000), msp)[2,]
@@ -225,7 +232,7 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
                         # 						    t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
                         # break
                         # ii = ii+100
-          }
+
                         # t1 = as.numeric(tsamp[sample(tidx, 1, prob = tval[tidx]),])
                         # t1 = as.numeric(tsamp)
         }

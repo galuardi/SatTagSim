@@ -391,7 +391,7 @@ plot.uv.density(par.ns)
 # Set number of sims, simulation steps per month and number of years
 
 msims = 50  # simulations to be started in each month
-npmon = 30 # number of simulation steps per month.
+npmon = 1 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
 sstol = 2 # number of suitable months for each daily simulation step
 #------------------------------------------------------------------------#
@@ -453,7 +453,7 @@ ncores = detectCores()
 cl = makeCluster(ncores)
 registerDoParallel(cl, cores = ncores)
 
-for(i in 4:6){
+for(i in 1:12){
   subsp = spts[[i]][sample(1:nrow(spts[[i]]), msims, replace = T),]
   subsp$row = 1:nrow(subsp)
   sp = dlply(subsp, 'row', function(x) x[,1:2])
@@ -496,7 +496,7 @@ names(simdatdf)[which(names(simdatdf)%in%c('lon,','lat'))] = c('lon','lat')
 
 mycol = colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"), space = "Lab")
 
-sr = dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize = 60))
+sr = dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize = 150))
 
 par(mfrow=c(2,2))
 par(mar=c(2,2,2,2))
