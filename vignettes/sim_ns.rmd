@@ -523,7 +523,7 @@ for(i in 1:4){
 ```{r, get_transmat, eval = T}
 
 # try new version of function... it works!!
-datbox = get.first.box(simdat, 2000, box11)
+datbox = get.first.box(simdat, 2000, box11, seas.len = npmon*3) # season length is number per month*3
 boxtrans = get.trans.prob(datbox, nyears=100, adims = c(11,11,4), perc = F)
 
 names(boxtrans) = seasons
