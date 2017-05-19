@@ -390,7 +390,7 @@ plot.uv.density(par.ns)
 #------------------------------------------------------------------------#
 # Set number of sims, simulation steps per month and number of years
 
-msims = 50  # simulations to be started in each month
+msims = 500  # simulations to be started in each month
 npmon = 1 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
 sstol = 2 # number of suitable months for each daily simulation step

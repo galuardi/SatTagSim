@@ -72,12 +72,12 @@ par(mfrow = c(3,4))
   for(j in 1:100){
       pbidx = 1  # box value
       seas = i # month/season
-      seaslen = 30 # multiplier for daily or monthly sims
+      seaslen = 1 # multiplier for daily or monthly sims
       uvmult = 30/seaslen
 
       u = c(par_array[pbidx, seas, 1])*uvmult
       v = c(par_array[pbidx, seas, 2])*uvmult
-      D = c(par_array[pbidx, seas, 3])#*uvmult
+      D = c(par_array[pbidx, seas, 3])*uvmult
       usd = c(par_array[pbidx, seas, 4])
       vsd = c(par_array[pbidx, seas, 5])
       Dsd = c(par_array[pbidx, seas, 6])
