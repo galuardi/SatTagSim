@@ -78,7 +78,9 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       gidx = which(sstdf_sub[, 3]>= sstol)
       if(length(gidx) > 0){
         # geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
-        idxmin = which.min(geosphere::distGeo(pt, sstdf_sub[gidx,1:2]))
+        dists = geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
+        # idxmin = which.min(geosphere::distGeo(pt, sstdf_sub[gidx,1:2]))
+        idxmin = sample(which(dists<=quantile(dists, .1)), 1)
         sstdf_sub[gidx[idxmin],1:2]
       }else{
         c(lon, lat)
