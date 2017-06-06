@@ -2,7 +2,7 @@
 
 
 # Load Data
-setwd('C:/Users/ben/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/')
+setwd('C:/Users/benjamin.galuardi/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/')
 load('LPRC_NOAA_GBYP_AZTI_DATA.Rdata')
 
 # Load PRELIM DATA
@@ -92,17 +92,67 @@ fill.month.par = function(x){
        y=x
   } else{
   sn = min(which(!is.na(x)))
-  y = magic::shift(x, sn-1)
+  sn = -sn+1
+  y = magic::shift(x, sn)
 
     for(i in which(is.na(y))) y[i] = y[which(!is.na(y))[max(which(which(!is.na(y)) < i))]]
 
-  if(sn != 1) y = magic::shift(y, -(sn-1))
+  if(sn != -1) y = magic::shift(y, -sn)
   }
   y
   }
 
-apply(ubox, 1, function(x) fill.month.par(x))
+u2 = t(apply(ubox, 1, function(x) fill.month.par(x)))
+u2[7,] = u2[8,]
+u2[11,] = u2[10,]
 
+v2 = t(apply(vbox, 1, function(x) fill.month.par(x)))
+v2[7,] = v2[8,]
+v2[11,] = v2[10,]
 
+# advection variance
+ubox_sd = apply(par2[,,,1], c(1,3), sd, na.rm=T)
+vbox_sd = apply(par2[,,,2], c(1,3), sd, na.rm=T)
 
+u2_sd = t(apply(ubox_sd, 1, function(x) fill.month.par(x)))
+u2_sd[7,] = u2_sd[8,]
+u2_sd[11,] = u2_sd[10,]
+
+v2_sd = t(apply(vbox_sd, 1, function(x) fill.month.par(x)))
+v2_sd[7,] = v2_sd[8,]
+v2_sd[11,] = v2_sd[10,]
+
+# Diffusion
+d_month_box = ddply(as.data.frame(tracks), 'box', get.kfD)
+
+dbox = daply(d_month_box, c('box', 'Month'), function(x) mean(x$D))
+dbox_sd = daply(d_month_box, c('box', 'Month'), function(x) sd(x$D))
+pnames = dimnames(dbox)
+pnames$box = as.character(1:11)
+par_test = array(NA, dim = c(11, dim(dbox)[2]), dimnames = pnames)
+par_test[missing,] = dbox
+dbox = par_test
+
+par_test = array(NA, dim = c(11, dim(dbox)[2]), dimnames = pnames)
+par_test[missing,] = dbox_sd
+dbox_sd = par_test
+rm(par_test)
+
+# fill in box/months with no observations
+dbox = t(apply(ubox_sd, 1, function(x) fill.month.par(x)))
+dbox[7,] = dbox[8,]
+dbox[11,] = dbox[10,]
+
+dbox_sd = t(apply(dbox_sd, 1, function(x) fill.month.par(x)))
+dbox_sd[7,] = dbox_sd[8,]
+dbox_sd[11,] = dbox_sd[10,]
+
+# Build the array: Box x Month x c(u, v, D, sd.u, sd.v, sd.D)
+par_array = abind::abind(u2, v2, dbox, u2_sd, v2_sd, dbox_sd, along = 3, new.names = c('u','v','D','u.sd','v.sd','D.sd'))
+
+# Starting points
+ns = as.data.frame(tracks)
+ns = ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
+spts = get.start.pts(ns, msims, months = 1:12, posnames = c('Longitude','Latitude'))
+str(spts)
 
