@@ -555,3 +555,26 @@ for(i in 1:12){
 
 ```
 
+## plot raster of results by month
+
+```{r, plot_simdf_bymonth, eval = T}
+sr = dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize = 150))
+
+par(mfrow=c(3, 4))
+par(mar=c(2,2,2,2))
+for(i in 1:12){
+  plot(sr[[i]]/max(values(sr[[i]]), na.rm=T), zlim = c(0.01,1), interp=F, col=mycol(256), axes=F)
+  rpts = xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
+  world(add=T, col='grey80', fill=F)
+  #   plot(box7, add=T, border='salmon', lwd=2)
+  #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font=2, cex=1.2)
+  plot(box11, add=T, border='salmon', lwd=2)
+  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font=2, cex=1.2)
+  text(lpts[,1], lpts[,2], box11@data[,3], cex = 2, col = 'black')
+  degAxis(1)
+  degAxis(2)
+  title(month.abb[i])
+  box()
+}
+```
+
