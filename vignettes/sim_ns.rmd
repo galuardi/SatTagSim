@@ -531,3 +531,27 @@ names(boxtrans) = seasons
 plot.boxtrans(boxtrans)
 ```
 
+## Plot simulation results by starting month
+
+```{r, plot_sims_bymonth, eval = T}
+par(mfrow=c(3,4))
+
+k = 1:50
+for(i in 1:12){
+  plot(box11, add=F, border='salmon', lwd=2, axes = F, xlim = c(-100, 40),  ylim = c(0, 70))
+  world(add = T, col = 'grey50')
+  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font=2, cex=1.2)
+  # text(lpts[,1], lpts[,2], box11@data[,3], cex = 2, col = 'black')
+  degAxis(1)
+  degAxis(2)
+  title(month.abb[i])
+  cidx = which(month.colors$Month==i)
+  # lapply(k, function(j) lines(simdat[[j]][,1:2], col = as.character(month.colors[cidx,2])))
+  lapply(k, function(j) lines(simdat[[j]][,1:2], col = hsv(.80, .9, .9, alpha = .15)))
+  lapply(k, function(j) points(simdat[[j]][1,1:2], col = hsv(.99, .9, .9, alpha = .5), pch = 19, cex = 1))
+  k = k+50
+}
+
+
+```
+

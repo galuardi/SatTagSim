@@ -103,30 +103,39 @@ fill.month.par = function(x){
   }
 
 u2 = t(apply(ubox, 1, function(x) fill.month.par(x)))
+u2[3,] = u2[4,] # if using NSFISH, make area 3 equal to area 4
 u2[7,] = u2[8,]
-u2[11,] = u2[10,]
+u2[11,] = u2[10,] = u2[9,] # if using NSFISH, make area 10 and 11 equal to area 9
 
 v2 = t(apply(vbox, 1, function(x) fill.month.par(x)))
+v2[3,] = v2[4,] # if using NSFISH, make area 3 equal to area 4
 v2[7,] = v2[8,]
-v2[11,] = v2[10,]
+v2[11,] = v2[10,] = v2[9,] # if using NSFISH, make area 10 and 11 equal to area 9
 
 # advection variance
 ubox_sd = apply(par2[,,,1], c(1,3), sd, na.rm=T)
 vbox_sd = apply(par2[,,,2], c(1,3), sd, na.rm=T)
 
 u2_sd = t(apply(ubox_sd, 1, function(x) fill.month.par(x)))
+u2_sd[3,] = u2_sd[4,] # if using NSFISH, make area 3 equal to area 4
 u2_sd[7,] = u2_sd[8,]
-u2_sd[11,] = u2_sd[10,]
+u2_sd[11,] = u2_sd[10,] = u2_sd[9,] # if using NSFISH, make area 10 and 11 equal to area 9
+# u2_sd[is.na(u2_sd)] = 0 # if there are not enough obs for an sd, fill in zeros
+for(i in 1:ncol(u2_sd)) u2_sd[is.na(u2_sd[,i]), i] =  sd(u2_sd[,i], na.rm=T)
 
 v2_sd = t(apply(vbox_sd, 1, function(x) fill.month.par(x)))
+v2_sd[3,] = v2_sd[4,] # if using NSFISH, make area 3 equal to area 4
 v2_sd[7,] = v2_sd[8,]
-v2_sd[11,] = v2_sd[10,]
+v2_sd[11,] = v2_sd[10,] = v2_sd[9,] # if using NSFISH, make area 10 and 11 equal to area 9
+# v2_sd[is.na(v2_sd)] = 0 # if there are not enough obs for an sd, fill in zeros
+for(i in 1:ncol(v2_sd)) v2_sd[is.na(v2_sd[,i]), i] =  sd(v2_sd[,i], na.rm=T)
+
 
 # Diffusion
 d_month_box = ddply(as.data.frame(tracks), 'box', get.kfD)
 
 dbox = daply(d_month_box, c('box', 'Month'), function(x) mean(x$D))
-dbox_sd = daply(d_month_box, c('box', 'Month'), function(x) sd(x$D))
+dbox_sd = daply(d_month_box, c('box', 'Month'), function(x) mean(x$Dsd))
 pnames = dimnames(dbox)
 pnames$box = as.character(1:11)
 par_test = array(NA, dim = c(11, dim(dbox)[2]), dimnames = pnames)
@@ -139,13 +148,17 @@ dbox_sd = par_test
 rm(par_test)
 
 # fill in box/months with no observations
-dbox = t(apply(ubox_sd, 1, function(x) fill.month.par(x)))
+dbox = t(apply(dbox, 1, function(x) fill.month.par(x)))
+dbox[3,] = dbox[4,] # if using NSFISH, make area 3 equal to area 4
 dbox[7,] = dbox[8,]
-dbox[11,] = dbox[10,]
+dbox[11,] = dbox[10,] = dbox[9,] # if using NSFISH, make area 10 and 11 equal to area 9
 
 dbox_sd = t(apply(dbox_sd, 1, function(x) fill.month.par(x)))
+dbox_sd[3,] = dbox_sd[4,] # if using NSFISH, make area 3 equal to area 4
 dbox_sd[7,] = dbox_sd[8,]
-dbox_sd[11,] = dbox_sd[10,]
+dbox_sd[11,] = dbox_sd[10,] = dbox_sd[9,] # if using NSFISH, make area 10 and 11 equal to area 9
+dbox_sd[is.na(dbox_sd)] = 0 # if there are not enough obs for an sd, fill in a global sd for that month
+
 
 # Build the array: Box x Month x c(u, v, D, sd.u, sd.v, sd.D)
 par_array = abind::abind(u2, v2, dbox, u2_sd, v2_sd, dbox_sd, along = 3, new.names = c('u','v','D','u.sd','v.sd','D.sd'))
