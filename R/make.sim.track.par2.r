@@ -1,11 +1,11 @@
 #' Simulate tracks in parallel
 #'
 #' Function to simulate a single track using monthly parameters, bathymetry and World Ocean Atlas SST in parallel
-#' @param n number of tracks to simulate
-#' @param tpar data frame of simulation parameters
+#' @param par_array array of temporal and spatially explcit simulation parameters @seealso xxxx
 #' @param morder month order for simulation (e.g. start in June vs start in January)
 #' @param sp list of starting points
 #' @param sstmat list of lon, lat and 3D matrix of monthly sea surface temperature. see details
+#' @param boxmat raster of spatial strata used when generating movement parameters @seealso xxxx
 #' @param seaslen length of each month to simulate. Defaults to 30 (days per month)
 #' @param sstol tolerance for sst matching. see details
 #' @param mcoptions This is a hidden variable that must be present to run in parallel

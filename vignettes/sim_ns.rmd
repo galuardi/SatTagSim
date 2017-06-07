@@ -536,7 +536,7 @@ plot.boxtrans(boxtrans)
 ```{r, plot_sims_bymonth, eval = T}
 par(mfrow=c(3,4))
 
-k = 1:50
+k = 1:msims
 for(i in 1:12){
   plot(box11, add=F, border='salmon', lwd=2, axes = F, xlim = c(-100, 40),  ylim = c(0, 70))
   world(add = T, col = 'grey50')
