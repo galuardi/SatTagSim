@@ -312,12 +312,19 @@ sstmat$data = sstdata
 ## If using the running average suitability
 {
   sstm = sstdata
-  for(i in 2:11){
+  for(i in c(2:6, 10:11)){
    sstm[,,i] = apply(sstdata[,,c(i-1,i,i+1)], 1:2, sum, na.rm = T)
   }
   sstm[,,1] = apply(sstdata[,,c(12, 1, 2)], 1:2, sum, na.rm = T)
   sstm[,,12] = apply(sstdata[,,c(11, 12, 1)], 1:2, sum, na.rm = T)
-
+  sstm[,,7] = sstm[,,7]*2   # purely for the summer in the gulf of mexico.. 
+  sstm[,,8] = sstm[,,8]*2
+  sstm[,,9] = sstm[,,9]*2
+  
+  for(i in 7:9){
+   sstm[,,i][is.na(sstm[,,i])] = 0
+  }
+  
   sstmat$data = sstm
   rm(sstdata, sstm)
 }

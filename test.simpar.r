@@ -6,6 +6,8 @@ boxmat$lon = unique(coordinates(rasbox)[,1])
 boxmat$lat = sort(unique(coordinates(rasbox)[,2]))
 boxmat$box = t(as.matrix(flip(rasbox, 2)))
 
+runtime = Sys.time()
+
 for(i in 1:50){
   print(i)
   if(!is.null(bath)){
@@ -89,6 +91,10 @@ for(i in 1:50){
   }
 }
 
+runtime = Sys.time()-runtime
+
+runtime
+
 # plot(rasbox)
 plot(box11, add=F, border = 'salmon', xlim = c(-120, -0), ylim = c(0, 50))
 image(seq(-100, 45, length = 145), seq(-50, 80, length = 130), rot90(as.array(rasbox)[,,1], 3), col = terrain.colors(12), add=T)
@@ -105,7 +111,8 @@ month.colors = data.frame(Month = as.numeric(month.colors[,1]), color = as.chara
 
 simdat = lapply(simdat, function(x) merge(x, month.colors, by = 'Month')[,c('lon,','lat','Month', 'color')])
 
-lapply(simdat, function(x) lines(x[,1], x[,2], col = as.character(x$color), typ ='o', pch = 19, cex = .4))
+# lapply(simdat, function(x) lines(x[,1], x[,2], col = as.character(x$color), typ ='o', pch = 19, cex = .4))
+lapply(simdat, function(x) lines(x[,1], x[,2], col = hsv(.1, .9, .9, alpha = .02)))
 
 
 #-----------------------------------------------------#
