@@ -340,7 +340,7 @@ for(i in 1:12){
 
 ## Get parameters from tag data
 
-```{r, get_params, echo = T}
+```{r, get_params_v1, echo = T, eval = F}
 
 #-----------------------------------------------------------------#
 # add spatial overlay to tag data
@@ -360,14 +360,24 @@ d.ns = get.kfD(as.data.frame(nsfish))
 simpar = merge.par(par.ns, d.ns, return.mean = T)
 ```
 
-```{r, show_params_table}
+```{r, get_params_v2, echo = T, eval = T}
+
+simpar = make.par.array(tracks = nsfish, inbox = box11, rasbox = NULL, rrows = 26*5, rcols = 29*5, use_wts = NULL, missvec = c(3,7,10,11), fillvec = c(4, 8, 9, 9))
+ 
+# par.ns = get.allpar(as.data.frame(nsfish))
+# d.ns = get.kfD(as.data.frame(nsfish))
+# simpar = merge.par(par.ns, d.ns, return.mean = T)
+```
+
+
+```{r, show_params_table, eval = F}
 knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
 ```
 
 \newpage
 
 ## Examine the tag based Advection and Diffusion parameters
-```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day'}
+```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day', eval = T}
 
 pdat = ddply(as.data.frame(nsfish), .(TagID), .fun=function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
 names(pdat)[2:4] = c('CFL','D','Dsd')
@@ -384,7 +394,8 @@ ggplot(pdat, aes(x=CFL, y=D)) +
 
 \newpage
 
-```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day'}
+```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day. This plot is not area specific but rather a general pattern of all fish within that month.'}
+par.ns = get.allpar(as.data.frame(nsfish))
 plot.uv.density(par.ns)
 ```
 
@@ -426,9 +437,9 @@ kable(morder, caption = 'Month order for multi-month start simulation', row.name
 
 ## Set up starting points for multi-start month simulation
 
-Set any indices for size or other criteria here. 
+Set any indices for size or other criteria here. This may also be done prior to the parameter calculation step. 
 
-```{r, stat_points, eval = T, echo = T}
+```{r, start_points, eval = T, echo = T}
 ns = as.data.frame(nsfish)
 ns = ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
 spts = get.start.pts(ns, msims, months = 1:12, posnames = c('Longitude','Latitude'))
@@ -438,6 +449,24 @@ str(spts)
 # degAxis(1)
 # degAxis(2)
 # box()
+
+```
+
+\newpage
+
+```{r, make_boxmat, eval = T}
+rasbox = make.rasbox(box11, raster = T)
+# boxmat = make.rasbox(box11, raster = F)
+
+# fix the bay of biscay
+rasbox[cellFromXY(rasbox, c(-2.5, 42.5))] = 8
+rasbox[cellFromXY(rasbox, c(-2.5, 45.5))] = 8
+
+# make a matrix for speed
+boxmat = list()
+boxmat$lon = unique(coordinates(rasbox)[,1])
+boxmat$lat = sort(unique(coordinates(rasbox)[,2]))
+boxmat$box = t(as.matrix(flip(rasbox, 2)))
 
 ```
 
@@ -469,7 +498,7 @@ for(i in 1:12){
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
   # test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
-    test = make.sim.track.par2(par_array = par_array, boxmat = boxmat, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
+    test = make.sim.track.par2(par_array = simpar, boxmat = boxmat, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
   simdat[[i]] = test
   runtime = Sys.time()-stime
   print(paste0('elapsed time: ', runtime))
@@ -552,7 +581,7 @@ for(i in 1:12){
   degAxis(1)
   degAxis(2)
   title(month.abb[i])
-  cidx = which(month.colors$Month==i)
+  # cidx = which(month.colors$Month==i)
   # lapply(k, function(j) lines(simdat[[j]][,1:2], col = as.character(month.colors[cidx,2])))
   lapply(k, function(j) lines(simdat[[j]][,1:2], col = hsv(.80, .9, .9, alpha = .15)))
   lapply(k, function(j) points(simdat[[j]][1,1:2], col = hsv(.99, .9, .9, alpha = .5), pch = 19, cex = 1))
