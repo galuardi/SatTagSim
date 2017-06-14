@@ -4,7 +4,7 @@
 \alias{get.first.box}
 \title{Get first occupied area in a time frame}
 \usage{
-get.first.box(simdat, syear = 2000, boxes = box7)
+get.first.box(simdat, syear = 2000, boxes = box7, seas.len = 90)
 }
 \arguments{
 \item{simdat}{list of simulated tracks from \code{\link{make.sim.track.par}}}
@@ -12,6 +12,8 @@ get.first.box(simdat, syear = 2000, boxes = box7)
 \item{syear}{start year; a dummy variable for date determination}
 
 \item{boxes}{spatial polygons strata for transition determination}
+
+\item{seas.len}{length of season. typically 90 days but can be adjusted for monthly or other time intervals}
 }
 \value{
 data frame with Year season previous box (strata) matrix transition and current box (strata). nuumbers of previous box  and current box refer to the polygon order in the the boxes parameter

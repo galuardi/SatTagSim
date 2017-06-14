@@ -1,5 +1,6 @@
 #' Make spatio-temporal array of movement parameters
 #' This function generates monthly advection and diffusion mean and standard deviation for each area in the spatial strata used. Missing months default to the previous months value. Missing areas should be filled in by the user.
+#'
 #' @param tracks spatial points data frame of tracks
 #' @param inbox spatial polygons (shapefile) of areas
 #' @param rasbox optional raster version of spatial polygons for areas. If included, rrows and rcols may be NULL
@@ -10,12 +11,11 @@
 #' @param fillvec vector of replacement rows for missvec. This is a subjectie decision by the user and is dependent on the spatial strata used
 #'
 #' @return
-#' @export
-#'
 #' @details
 #' The default size raster created is 130 degrees latitude and 145 degrees longitude, with 5 degree cells. This should be specific to the spatial strata used (e.g. the 11 box model) and should ideally have cells that split the areas along ploygon lines.
 #'
 #' @examples
+#' @export
 make.par.array <- function(tracks, inbox, rasbox = NULL, rrows = 26*5, rcols = 29*5, use_wts = NULL, missvec = NULL, fillvec = NULL){
 
 require(abind)
@@ -53,13 +53,6 @@ fill.month.par = function(x){
 
   }
 
-  # make a matrix for speed
-boxmat = list()
-boxmat$lon = unique(coordinates(rasbox)[,1])
-boxmat$lat = sort(unique(coordinates(rasbox)[,2]))
-boxmat$box = t(as.matrix(flip(rasbox, 2)))
-
-
 ## make a 3D array of parameters
 ## Month and 11 box area
 
@@ -71,7 +64,7 @@ boxvec = sort(inbox@plotOrder)
 
 missing = (boxvec)%in%as.numeric(unique(tracks$box))
 
-par2 = daply(as.data.frame(tracks), c('box', 'TagID', 'Month'), function(x) get.uv(x[,c('Day','Month','Year','Longitude','Latitude')]))
+par2 = daply(tracks@data, c('box', 'TagID', 'Month'), function(x) get.uv(x[,c('Day','Month','Year','Longitude','Latitude')]))
 pnames = dimnames(par2)
 pnames$box = as.character(boxvec)
 par_test = array(NA, dim = c(length(boxvec), dim(par2)[2:4]), dimnames = pnames)
@@ -80,7 +73,7 @@ par2 = par_test
 rm(par_test)
 
   if(!is.null(use_wts)){
-    tagwts = daply(as.data.frame(tracks), c('box', 'Month'), function(x) nrow(x))
+    tagwts = daply(tracks@data, c('box', 'Month'), function(x) nrow(x))
     pnames = dimnames(tagwts)
     pnames$box = as.character(boxvec)
     tw2 = array(NA, dim = c(length(boxvec), dim(tagwts)[2]), dimnames = pnames)
@@ -110,7 +103,7 @@ v2_sd = t(apply(vbox_sd, 1, function(x) fill.month.par(x)))
 
 
 # Diffusion
-d_month_box = ddply(as.data.frame(tracks), 'box', get.kfD)
+d_month_box = ddply(tracks@data, 'box', get.kfD)
 
 dbox = daply(d_month_box, c('box', 'Month'), function(x) mean(x$D))
 dbox_sd = daply(d_month_box, c('box', 'Month'), function(x) mean(x$Dsd))
