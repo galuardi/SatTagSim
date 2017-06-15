@@ -2,7 +2,7 @@
 
 
 # Load Data
-setwd('C:/Users/benjamin.galuardi/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/')
+setwd('C:/Users/ben/Google Drive/PHD/COLLABORATIONS/SCRS_SIMS/')
 load('LPRC_NOAA_GBYP_AZTI_DATA.Rdata')
 
 # Load PRELIM DATA
