@@ -1,11 +1,11 @@
 #' Simulate tracks in parallel
 #'
 #' Function to simulate a single track using monthly parameters, bathymetry and World Ocean Atlas SST in parallel
-#' @param n number of tracks to simulate
-#' @param tpar data frame of simulation parameters
+#' @param par_array array of temporal and spatially explcit simulation parameters @seealso xxxx
 #' @param morder month order for simulation (e.g. start in June vs start in January)
 #' @param sp list of starting points
 #' @param sstmat list of lon, lat and 3D matrix of monthly sea surface temperature. see details
+#' @param boxmat raster of spatial strata used when generating movement parameters @seealso xxxx
 #' @param seaslen length of each month to simulate. Defaults to 30 (days per month)
 #' @param sstol tolerance for sst matching. see details
 #' @param mcoptions This is a hidden variable that must be present to run in parallel
@@ -62,6 +62,20 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       mask$data[xidx, yidx, month] # flagged off for additive months
       # mask$data[xidx, yidx]
     }
+    # Convert degrees to radians
+    deg2rad <- function(deg) return(deg*pi/180)
+
+    # Calculates the geodesic distance between two points specified by radian latitude/longitude using the
+    # Haversine formula (hf)
+    gcd.hf <- function(long1, lat1, long2, lat2) {
+      R <- 6371 # Earth mean radius [km]
+      delta.long <- (long2 - long1)
+      delta.lat <- (lat2 - lat1)
+      a <- sin(delta.lat/2)^2 + cos(lat1) * cos(lat2) * sin(delta.long/2)^2
+      c <- 2 * asin(min(1,sqrt(a)))
+      d = R * c
+      return(d) # Distance in km
+    }
 
     find.next.sst <- function(lon, lat, sstdf, sstol, expand = 10) {
       # sstdf = data.frame(expand.grid(sstmat$lon, sstmat$lat), sst = as.vector(sstmat$data[,,8]))
@@ -78,10 +92,11 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       gidx = which(sstdf_sub[, 3]>= sstol)
       if(length(gidx) > 0){
         # geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
-        dists = geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
+        # dists = geosphere::distGeo(pt, sstdf_sub[gidx,1:2])
+        dists = apply(sstdf_sub[gidx,1:2], 1, function(x) gcd.hf(pt[1], pt[1], x[1], x[2]))
         # idxmin = which.min(geosphere::distGeo(pt, sstdf_sub[gidx,1:2]))
         idxmin = sample(which(dists<=quantile(dists, .1)), 1)
-        sstdf_sub[gidx[idxmin],1:2]
+        as.numeric(sstdf_sub[gidx[idxmin],1:2])
       }else{
         c(lon, lat)
         }

@@ -5,7 +5,7 @@
 \title{Simulate KF}
 \usage{
 simm.kf(n = 100, u = c(0, 1), v = c(0, 1), D = c(100, 50), sp = c(-70,
-  40))
+  40), ulim = c(-50, 50), vlim = c(-50, 50), Dlim = c(0, 5000))
 }
 \arguments{
 \item{n}{number of points to simulate}

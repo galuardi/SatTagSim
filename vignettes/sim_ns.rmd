@@ -312,12 +312,19 @@ sstmat$data = sstdata
 ## If using the running average suitability
 {
   sstm = sstdata
-  for(i in 2:11){
+  for(i in c(2:6, 10:11)){
    sstm[,,i] = apply(sstdata[,,c(i-1,i,i+1)], 1:2, sum, na.rm = T)
   }
   sstm[,,1] = apply(sstdata[,,c(12, 1, 2)], 1:2, sum, na.rm = T)
   sstm[,,12] = apply(sstdata[,,c(11, 12, 1)], 1:2, sum, na.rm = T)
-
+  sstm[,,7] = sstm[,,7]*2   # purely for the summer in the gulf of mexico.. 
+  sstm[,,8] = sstm[,,8]*2
+  sstm[,,9] = sstm[,,9]*2
+  
+  for(i in 7:9){
+   sstm[,,i][is.na(sstm[,,i])] = 0
+  }
+  
   sstmat$data = sstm
   rm(sstdata, sstm)
 }
@@ -333,7 +340,7 @@ for(i in 1:12){
 
 ## Get parameters from tag data
 
-```{r, get_params, echo = T}
+```{r, get_params_v1, echo = T, eval = F}
 
 #-----------------------------------------------------------------#
 # add spatial overlay to tag data
@@ -353,14 +360,24 @@ d.ns = get.kfD(as.data.frame(nsfish))
 simpar = merge.par(par.ns, d.ns, return.mean = T)
 ```
 
-```{r, show_params_table}
+```{r, get_params_v2, echo = T, eval = T}
+
+simpar = make.par.array(tracks = nsfish, inbox = box11, rasbox = NULL, rrows = 26*5, rcols = 29*5, use_wts = NULL, missvec = c(3,7,10,11), fillvec = c(4, 8, 9, 9))
+ 
+# par.ns = get.allpar(as.data.frame(nsfish))
+# d.ns = get.kfD(as.data.frame(nsfish))
+# simpar = merge.par(par.ns, d.ns, return.mean = T)
+```
+
+
+```{r, show_params_table, eval = F}
 knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
 ```
 
 \newpage
 
 ## Examine the tag based Advection and Diffusion parameters
-```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day'}
+```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day', eval = T}
 
 pdat = ddply(as.data.frame(nsfish), .(TagID), .fun=function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
 names(pdat)[2:4] = c('CFL','D','Dsd')
@@ -377,7 +394,8 @@ ggplot(pdat, aes(x=CFL, y=D)) +
 
 \newpage
 
-```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day'}
+```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day. This plot is not area specific but rather a general pattern of all fish within that month.'}
+par.ns = get.allpar(as.data.frame(nsfish))
 plot.uv.density(par.ns)
 ```
 
@@ -391,7 +409,7 @@ plot.uv.density(par.ns)
 # Set number of sims, simulation steps per month and number of years
 
 msims = 50  # simulations to be started in each month
-npmon = 1 # number of simulation steps per month.
+npmon = 30 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
 sstol = 2 # number of suitable months for each daily simulation step
 #------------------------------------------------------------------------#
@@ -419,9 +437,9 @@ kable(morder, caption = 'Month order for multi-month start simulation', row.name
 
 ## Set up starting points for multi-start month simulation
 
-Set any indices for size or other criteria here. 
+Set any indices for size or other criteria here. This may also be done prior to the parameter calculation step. 
 
-```{r, stat_points, eval = T, echo = T}
+```{r, start_points, eval = T, echo = T}
 ns = as.data.frame(nsfish)
 ns = ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
 spts = get.start.pts(ns, msims, months = 1:12, posnames = c('Longitude','Latitude'))
@@ -431,6 +449,24 @@ str(spts)
 # degAxis(1)
 # degAxis(2)
 # box()
+
+```
+
+\newpage
+
+```{r, make_boxmat, eval = T}
+rasbox = make.rasbox(box11, raster = T)
+# boxmat = make.rasbox(box11, raster = F)
+
+# fix the bay of biscay
+rasbox[cellFromXY(rasbox, c(-2.5, 42.5))] = 8
+rasbox[cellFromXY(rasbox, c(-2.5, 45.5))] = 8
+
+# make a matrix for speed
+boxmat = list()
+boxmat$lon = unique(coordinates(rasbox)[,1])
+boxmat$lat = sort(unique(coordinates(rasbox)[,2]))
+boxmat$box = t(as.matrix(flip(rasbox, 2)))
 
 ```
 
@@ -462,7 +498,7 @@ for(i in 1:12){
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
   # test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
-    test = make.sim.track.par2(par_array = par_array, boxmat = boxmat, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
+    test = make.sim.track.par2(par_array = simpar, boxmat = boxmat, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
   simdat[[i]] = test
   runtime = Sys.time()-stime
   print(paste0('elapsed time: ', runtime))
@@ -529,5 +565,52 @@ boxtrans = get.trans.prob(datbox, nyears=100, adims = c(11,11,4), perc = F)
 names(boxtrans) = seasons
 
 plot.boxtrans(boxtrans)
+```
+
+## Plot simulation results by starting month
+
+```{r, plot_sims_bymonth, eval = T}
+par(mfrow=c(3,4))
+
+k = 1:msims
+for(i in 1:12){
+  plot(box11, add=F, border='salmon', lwd=2, axes = F, xlim = c(-100, 40),  ylim = c(0, 70))
+  world(add = T, col = 'grey50')
+  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font=2, cex=1.2)
+  # text(lpts[,1], lpts[,2], box11@data[,3], cex = 2, col = 'black')
+  degAxis(1)
+  degAxis(2)
+  title(month.abb[i])
+  # cidx = which(month.colors$Month==i)
+  # lapply(k, function(j) lines(simdat[[j]][,1:2], col = as.character(month.colors[cidx,2])))
+  lapply(k, function(j) lines(simdat[[j]][,1:2], col = hsv(.80, .9, .9, alpha = .15)))
+  lapply(k, function(j) points(simdat[[j]][1,1:2], col = hsv(.99, .9, .9, alpha = .5), pch = 19, cex = 1))
+  k = k+50
+}
+
+
+```
+
+## plot raster of results by month
+
+```{r, plot_simdf_bymonth, eval = T}
+sr = dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize = 150))
+
+par(mfrow=c(3, 4))
+par(mar=c(2,2,2,2))
+for(i in 1:12){
+  plot(sr[[i]]/max(values(sr[[i]]), na.rm=T), zlim = c(0.01,1), interp=F, col=mycol(256), axes=F)
+  rpts = xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
+  world(add=T, col='grey80', fill=F)
+  #   plot(box7, add=T, border='salmon', lwd=2)
+  #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font=2, cex=1.2)
+  plot(box11, add=T, border='salmon', lwd=2)
+  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font=2, cex=1.2)
+  text(lpts[,1], lpts[,2], box11@data[,3], cex = 2, col = 'black')
+  degAxis(1)
+  degAxis(2)
+  title(month.abb[i])
+  box()
+}
 ```
 
