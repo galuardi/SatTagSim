@@ -14,18 +14,29 @@
 #' simdatdf$seas[simdatdf$Month%in%c(10,11,12)] = 4
 #' sr = dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize=60))
 #' plot.seas.change(sr)
-plot.seas.change <- function(sr, box = NULL){
-  seasons = c('Winter','Spring','Summer','Fall')
-  par(mfrow=c(2,2))
-  par(mar=c(2,2,2,2))
-  for(i in 1:4){
-    if (i==1){
-      mdiff = max(abs(values(sr[[1]]- sr[[4]])), na.rm=T)
-      plot((sr[[1]]- sr[[4]])/mdiff, interp=T, col = tim.colors(256), axes=F)
-    }else{
-      mdiff = max(abs(values(sr[[i]]-sr[[i-1]])), na.rm=T)
-      plot((sr[[i]]-sr[[i-1]])/mdiff, interp=T, col = tim.colors(256), axes=F)
+plot.seas.change <- function(sr, box = NULL, col = fields::tim.colors(100), par = c(2,2),mar = c(2,2,2,2)){
+  a = 1:length(sr)
+  if(length(a) == 4){
+    seasons = c('Winter','Spring','Summer','Fall')
+    b = c(4, 1:3)
+  }
+  if(length(a) == 12){
+    seasons = month.name
+    b = c(12, 1:11)
     }
+
+
+  par(mfrow = par)
+  par(mar = mar)
+
+  for(i in a){
+    # if (i == 1){
+    #   mdiff = max(abs(values(sr[[1]]- sr[[4]])), na.rm=T)
+    #   plot((sr[[1]]- sr[[4]])/mdiff, interp=T, col = col, axes=F)
+    # }else{
+      mdiff = max(abs(values(sr[[i]]-sr[[b[i]]])), na.rm=T)
+      plot((sr[[i]]-sr[[b[i]]])/mdiff, interp=T, col = col, axes=F)
+    # }
     rpts = xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
     world(add = T, col = hsv(0,0,.8, alpha = .25), fill = T)
     if(!is.null(box)){
