@@ -98,7 +98,7 @@ runtime
 # plot(rasbox)
 plot(box11, add=F, border = 'salmon', xlim = c(-120, -0), ylim = c(0, 50))
 image(seq(-100, 45, length = 145), seq(-50, 80, length = 130), rot90(as.array(rasbox)[,,1], 3), col = terrain.colors(12), add=T)
-grid(nx = 29, ny = 26)
+abline(v = seq(-100, 40, by = 5), h = seq(-30, 80, by = 5), lty = 3, col = 'grey90')
 plot(map , add=T)
 plot(box11, add=T, border = 'salmon')
 degAxis(1)

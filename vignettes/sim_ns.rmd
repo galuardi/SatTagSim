@@ -14,13 +14,17 @@ output:
 <!--   %\VignetteEngine{knitr::rmarkdown} -->
 <!--   %\VignetteEncoding{UTF-8} -->
 
-##Simulation of Nova Scotia tagged Atlantic bluefin tuna \emph{(Thunnus thynnus)} and get seasonal transition matrices from a 7-box spatial strata.
+##Simulation of Nova Scotia tagged Atlantic bluefin tuna \emph{(Thunnus thynnus)} and get seasonal transition matrices using an 11-box spatial stratification.
 
 
 ```{r, global_options, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, 
 											message = FALSE, cache = FALSE,
-											progress = TRUE, verbose = FALSE, fig.width = 8, fig.height = 6)
+											progress = TRUE, verbose = FALSE
+											, comment = FALSE
+											, fig.width = 8
+											, fig.height = 6
+											, dev = 'pdf')
 
 ```	
 
@@ -28,7 +32,7 @@ load background data and set up parallel
 
 ```{r, setup_data, eval = T}
 library(SatTagSim)
-library(analyzepsat)
+# library(analyzepsat)
 library(rworldmap)
 library(rworldxtra)
 library(knitr)
@@ -36,14 +40,14 @@ data(box7)
 data(box11)
 data(rmask)
 data(nsfish)
-data(myramps)
+data(myramps, package = 'analyzepsat')
 map = rworldmap::getMap(resolution = 'high')
 # sst = rmask2array(rmask)
 # mcoptions = setup.parallel()
 ```
 
 ## Tag data:
-```{r, plot_tags, fig.width = 9, fig.height = 6}
+```{r, plot_tags, fig.width = 9, fig.height = 6, caption = "31 Atlantic bluefin tuna, tagged in Nova Scotia, Canada, in 2005 and 2006 (Galuardi et al. 2010)" }
 par(mar = c(3,3,3,6))
 plot(nsfish, col = 1, pch = 19, cex = .6, ylim = c(20, 50), xlim = c(-100, 0))
 sapply(1:12, function(x) points(nsfish[nsfish$Month==x,1:2], col = month.colors[x==month.colors[,1],2], pch = 19))
@@ -52,7 +56,7 @@ plot(map, add=T, col = 'cornsilk4', fill=T)
 degAxis(1)
 degAxis(2)
 box()
- analyzepsat::.add.month.scale()
+analyzepsat::.add.month.scale()
 ```
 
 \newpage
@@ -66,8 +70,7 @@ ddply(as.data.frame(nsfish), c('TagID'), function(x) data.frame(nmonths = length
 
 \newpage
 
-## plot as raster:
-```{r, plot_tags_raster, fig.width = 8, fig.height = 6}
+```{r, plot_tags_raster, fig.width = 8, fig.height = 6, caption = 'Nova Scotia bluefin tracks plotted as a rasterized grid. Cells are summed location frequency.'}
 
 make.tag.raster  <- function(simdat, xmn = -100, xmx = 30, ymn = 0, ymx = 60, boxsize= 60){
   # require(raster)
@@ -97,7 +100,7 @@ box()
 <!-- \newpage -->
 
 <!-- ## Length of deployment by size -->
-```{r, plot_DAL, eval = F}
+```{r, plot_DAL, eval = F, caption = 'Days at liberty'}
 # pdat = ddply(as.data.frame(nsfish), .(TagID, Length), .fun=function(x) data.frame(DAL = nrow(x)))
 # 
 # ggplot(pdat, aes(TagID, DAL))+geom_bar(stat = 'identity')
@@ -109,7 +112,6 @@ box()
 
 \newpage
 ## Spatial strata in this package
-7-box strata from the Kerr et al. operational model
 
 ```{r, plot_box7, fig.show = 'asis', echo = F, eval = T, fig.width = 8, fig.height = 6, fig.cap = '7- box stratification from Kerr et al. (2016) operational model'}
 # library(fields)
@@ -149,7 +151,7 @@ title('11-box')
 \newpage
 
 ## Environmental data in this package
-World Ocean Atlas sea surface temperature is included. A raster mask, predicated on suitable temperature habitat in each month, is also included. 
+
 
 ```{r, plot_WOA, eval = T, fig.show = 'asis', fig.cap = 'World Ocean Atlas (2013) mean temperature'}
 library(fields)
@@ -200,7 +202,9 @@ Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen
 
 \newpage
 
-```{r, sst_pref_plot, fig.cap = 'Number of months with suitable surface temperature'}
+## Temprature preference raster mask
+
+```{r, sst_pref_plot, fig.cap = 'Number of months with suitable surface temperature based on WOA and tag measured temperatures'}
 sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
                 ,lat = sort(unique(coordinates(rmask[[1]])[,2]))
                 # ,data = as.array(rmask)
@@ -240,6 +244,9 @@ title('Number of months with suitable surface temperature')
 
 ```
 
+\newpage
+
+## Monthly temperature mask
 
 ```{r, sst_pref_plot_12months, fig.cap = 'Number of months with suitable surface temperature. This plot shows a rolling sum of the current and next months binary values. This assists the simulation avoid entrainment in poor areas while accounting for where the fish might go next.'}
 # 
@@ -278,7 +285,7 @@ sstmat$data = sstdata2
 par(mfrow=c(3,4))
 for(i in 1:12){
   par(mar=c(1,1,2,5))
-plot(map, add=F, col = 'white', xlim = c(-100, 40), ylim = c(0,65), axes = F)
+plot(map, add=F, col = 0, border = 0, xlim = c(-95, 30), ylim = c(20,60), axes = F)
 image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim = c(-100, 40), ylim = c(0,65),  col = viridis(max(sstmat$data[,,i])+1), axes = F, add=T)
 plot(map, add=T, col = 'white', axes = F)
 image.plot(sstmat$data[,,i], legend.only = T, col = viridis(max(sstmat$data[,,i])+1), nlevel = 3)
@@ -376,7 +383,7 @@ knitr::kable(simpar, caption = 'Advection and Diffusion parameters for simulatio
 
 \newpage
 
-## Examine the tag based Advection and Diffusion parameters
+## Examine the tag based Diffusion parameters
 ```{r, D_plot, fig.cap = 'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day', eval = T}
 
 pdat = ddply(as.data.frame(nsfish), .(TagID), .fun=function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
@@ -394,6 +401,7 @@ ggplot(pdat, aes(x=CFL, y=D)) +
 
 \newpage
 
+## Examine the tag based Advection parameters
 ```{r, uv_plot, fig.cap = 'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day. This plot is not area specific but rather a general pattern of all fish within that month.'}
 par.ns = get.allpar(as.data.frame(nsfish))
 plot.uv.density(par.ns)
@@ -409,7 +417,7 @@ plot.uv.density(par.ns)
 # Set number of sims, simulation steps per month and number of years
 
 msims = 50  # simulations to be started in each month
-npmon = 30 # number of simulation steps per month.
+npmon = 1 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
 sstol = 2 # number of suitable months for each daily simulation step
 #------------------------------------------------------------------------#
@@ -443,7 +451,7 @@ Set any indices for size or other criteria here. This may also be done prior to 
 ns = as.data.frame(nsfish)
 ns = ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
 spts = get.start.pts(ns, msims, months = 1:12, posnames = c('Longitude','Latitude'))
-str(spts)
+# str(spts)
 # plot(map, xlim = c(-100, 0), ylim = c(20, 50))
 # for(i in 1:12) points(spts[[i]], col = month.colors[which(as.numeric(month.colors[,1])==i),2], pch = 19)
 # degAxis(1)
@@ -514,7 +522,7 @@ simdat = unlist(simdat, recursive = F)
 
 ## Make a dataframe and raster of results
 
-```{r, simdatdf, eval = T, fig.cap = 'Posterior distribution of simulated tracks; 1-minute cell size'}
+```{r, simdatdf, eval = T, fig.cap = 'Posterior distribution of simulated tracks, 1-minute cell size, by season'}
 # MAKE A DATA FRAME OF THE RESULTS
 simdatdf = ldply(simdat)
 seasons = c("Winter", "Spring", "Summer", "Fall")
@@ -556,7 +564,17 @@ for(i in 1:4){
 
 ## Get seasonal transition matrices using the 11 box model
 
-```{r, get_transmat, eval = T}
+```{r, get_transmat_rate, eval = T, caption = 'Transitions expressed as a rate'}
+
+# try new version of function... it works!!
+datbox = get.first.box(simdat, 2000, box11, seas.len = npmon*3) # season length is number per month*3
+boxtrans = get.trans.prob(datbox, nyears=100, adims = c(11,11,4), perc = T)
+
+names(boxtrans) = seasons
+
+plot.boxtrans(boxtrans)
+```
+```{r, get_transmat_total, eval = T, caption = 'Transitions expressed as a total'}
 
 # try new version of function... it works!!
 datbox = get.first.box(simdat, 2000, box11, seas.len = npmon*3) # season length is number per month*3
@@ -569,11 +587,12 @@ plot.boxtrans(boxtrans)
 
 ## Plot simulation results by starting month
 
-```{r, plot_sims_bymonth, eval = T}
+```{r, plot_sims_bymonth, eval = F}
 par(mfrow=c(3,4))
 
 k = 1:msims
 for(i in 1:12){
+  par(mar = c(2,2,2,2))
   plot(box11, add=F, border='salmon', lwd=2, axes = F, xlim = c(-100, 40),  ylim = c(0, 70))
   world(add = T, col = 'grey50')
   # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font=2, cex=1.2)
@@ -584,7 +603,7 @@ for(i in 1:12){
   # cidx = which(month.colors$Month==i)
   # lapply(k, function(j) lines(simdat[[j]][,1:2], col = as.character(month.colors[cidx,2])))
   lapply(k, function(j) lines(simdat[[j]][,1:2], col = hsv(.80, .9, .9, alpha = .15)))
-  lapply(k, function(j) points(simdat[[j]][1,1:2], col = hsv(.99, .9, .9, alpha = .5), pch = 19, cex = 1))
+  lapply(k, function(j) points(simdat[[j]][1,1:2], col = hsv(.5, .5, .9, alpha = .5), pch = 19, cex = 1))
   k = k+50
 }
 
@@ -593,7 +612,7 @@ for(i in 1:12){
 
 ## plot raster of results by month
 
-```{r, plot_simdf_bymonth, eval = T}
+```{r, plot_simdf_bymonth, eval = T, fig.cap = 'Posterior distribution of simulated tracks, 1-minute cell size, by month'}
 sr = dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize = 150))
 
 par(mfrow=c(3, 4))
@@ -614,3 +633,15 @@ for(i in 1:12){
 }
 ```
 
+## Compare seasonal changes, spatially
+
+```{r, plot_seas_change, eval = T, fig.cap = 'Seasonal shifts (transitions) expressed spatially. 7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
+sr = dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize = 150))
+plot.seas.change(sr, col = (fields::tim.colors(256)), mar = c(2,2,2,4), box = box7)
+```
+
+## Compare monthly changes, spatially
+```{r, plot_seas_change_month, eval = T, fig.cap = 'Monthly shifts (transitions) expressed spatially.  7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
+sr = dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize = 150))
+plot.seas.change(sr, col = (fields::tim.colors(256)), par = c(3,4), mar = c(2,2,2,4), box = box7)
+```
