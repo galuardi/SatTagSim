@@ -8,7 +8,7 @@ boxmat$box = t(as.matrix(flip(rasbox, 2)))
 
 runtime = Sys.time()
 
-for(i in 1:50){
+for(i in 1:length(sp)){
   print(i)
   if(!is.null(bath)){
     msp = getsp(as.numeric(sp[[i]]), bath = bath)
@@ -30,21 +30,34 @@ for(i in 1:50){
 
     for(j in 1:seaslen) {
 
-      # msps = SpatialPoints(t(as.matrix(msp)))
-      # tbox = raster::extract(rasbox, msps)
-
       xidx = which.min((msp[1] - boxmat$lon)^2)
       yidx = which.min((msp[2] - boxmat$lat)^2)
-
       tbox = boxmat$box[xidx, yidx]
 
-      parbox = as.numeric(attributes(par_array)$dimnames[[1]])
+      if(is.na(tbox) & j == 1){
+        if(!is.null(bath)){
+          msp = getsp(i, bath = bath)
+        }else{
+          msp = as.numeric(i)
+        }
+        xidx = which.min((msp[1] - boxmat$lon)^2)
+        yidx = which.min((msp[2] - boxmat$lat)^2)
+        tbox = boxmat$box[xidx, yidx]
+      }
 
+      if(is.na(tbox) & j > 1){
+        msp = temp[j-1, ]
+        xidx = which.min((msp[1] - boxmat$lon)^2)
+        yidx = which.min((msp[2] - boxmat$lat)^2)
+        tbox = boxmat$box[xidx, yidx]
+      }
+
+      parbox = as.numeric(attributes(par_array)$dimnames[[1]])
       pbidx = which(parbox==tbox)
 
       u = c(par_array[pbidx, seas, 1])*uvmult
       v = c(par_array[pbidx, seas, 2])*uvmult
-      D = c(par_array[pbidx, seas, 3])*uvmult
+      D = c(par_array[pbidx, seas, 3])#*uvmult
       usd = c(par_array[pbidx, seas, 4])
       vsd = c(par_array[pbidx, seas, 5])
       Dsd = c(par_array[pbidx, seas, 6])
@@ -59,7 +72,7 @@ for(i in 1:50){
 
       ulim = c(-50, 50)*uvmult
       vlim = c(-50, 50)*uvmult
-      Dlim = c(0, 5000)*uvmult
+      Dlim = c(0, 5000)#*uvmult
 
       t1 = SatTagSim::simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2,]
 
@@ -112,7 +125,7 @@ month.colors = data.frame(Month = as.numeric(month.colors[,1]), color = as.chara
 simdat = lapply(simdat, function(x) merge(x, month.colors, by = 'Month')[,c('lon,','lat','Month', 'color')])
 
 # lapply(simdat, function(x) lines(x[,1], x[,2], col = as.character(x$color), typ ='o', pch = 19, cex = .4))
-lapply(simdat, function(x) lines(x[,1], x[,2], col = hsv(.1, .9, .9, alpha = .02)))
+lapply(simdat, function(x) lines(x[,1], x[,2], col = hsv(.75, .9, .9, alpha = .12)))
 
 
 #-----------------------------------------------------#
