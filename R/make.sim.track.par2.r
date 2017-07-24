@@ -143,12 +143,30 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
       yidx = which.min((msp[2] - boxmat$lat)^2)
       tbox = boxmat$box[xidx, yidx]
 
+      if(is.na(tbox) & j == 1){
+        if(!is.null(bath)){
+          msp = getsp(i, bath = bath)
+        }else{
+          msp = as.numeric(i)
+        }
+        xidx = which.min((msp[1] - boxmat$lon)^2)
+        yidx = which.min((msp[2] - boxmat$lat)^2)
+        tbox = boxmat$box[xidx, yidx]
+      }
+
+      if(is.na(tbox) & j > 1){
+        msp = temp[j-1, ]
+        xidx = which.min((msp[1] - boxmat$lon)^2)
+        yidx = which.min((msp[2] - boxmat$lat)^2)
+        tbox = boxmat$box[xidx, yidx]
+      }
+
       parbox = as.numeric(attributes(par_array)$dimnames[[1]])
       pbidx = which(parbox==tbox)
 
       u = c(par_array[pbidx, seas, 1])*uvmult
       v = c(par_array[pbidx, seas, 2])*uvmult
-      D = c(par_array[pbidx, seas, 3])*uvmult
+      D = c(par_array[pbidx, seas, 3])#*uvmult
       usd = c(par_array[pbidx, seas, 4])
       vsd = c(par_array[pbidx, seas, 5])
       Dsd = c(par_array[pbidx, seas, 6])
@@ -163,7 +181,7 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
 
       ulim = c(-50, 50)*uvmult
       vlim = c(-50, 50)*uvmult
-      Dlim = c(0, 5000)*uvmult
+      Dlim = c(0, 5000)#*uvmult
 
       t1 = SatTagSim::simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2,]
 #

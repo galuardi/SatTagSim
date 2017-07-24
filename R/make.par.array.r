@@ -64,7 +64,9 @@ boxvec = sort(inbox@plotOrder)
 
 missing = (boxvec)%in%as.numeric(unique(tracks$box))
 
-par2 = daply(tracks@data, c('box', 'TagID', 'Month'), function(x) get.uv(x[,c('Day','Month','Year','Longitude','Latitude')]))
+tracksdf = as.data.frame(tracks)
+
+par2 = daply(tracksdf, c('box', 'TagID', 'Month'), function(x) get.uv(x[,c('Day','Month','Year','Longitude','Latitude')]))
 pnames = dimnames(par2)
 pnames$box = as.character(boxvec)
 par_test = array(NA, dim = c(length(boxvec), dim(par2)[2:4]), dimnames = pnames)
@@ -73,7 +75,7 @@ par2 = par_test
 rm(par_test)
 
   if(!is.null(use_wts)){
-    tagwts = daply(tracks@data, c('box', 'Month'), function(x) nrow(x))
+    tagwts = daply(tracksdf, c('box', 'Month'), function(x) nrow(x))
     pnames = dimnames(tagwts)
     pnames$box = as.character(boxvec)
     tw2 = array(NA, dim = c(length(boxvec), dim(tagwts)[2]), dimnames = pnames)
