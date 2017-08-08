@@ -11,7 +11,7 @@
 #' @seealso \code{\link{get.trans.prob}} \code{\link{box7}}
 #' @examples
 #' see vignette
-get.first.box <- function(simdat, syear=2000, boxes=box7, seas.len = 90){
+get.first.box <- function(simdat, syear=2000, boxes=box7, seas.len = 90, nyears = 2){
 
   n = nrow(simdat[[1]])
 
@@ -21,7 +21,7 @@ get.first.box <- function(simdat, syear=2000, boxes=box7, seas.len = 90){
 
   datbox1$TagID = as.vector(apply(data.frame(names(simdat)), 1, rep, n/seas.len)) # 90 days in a season
   years = syear:((syear+n/360)-1)
-  datbox1$Year = as.vector(apply(data.frame(years), 1, rep, n/seas.len*2)) # 180 is the total of 2 seasons for each year
+  datbox1$Year = as.vector(apply(data.frame(years), 1, rep, n/seas.len*nyears)) # 180 is the total of 2 seasons for each year
   datbox1$cbox = datbox1$box
 
   # flbox = ddply(datbox1, c('Year','season', 'TagID'), function(x) c(x$box[1]))
