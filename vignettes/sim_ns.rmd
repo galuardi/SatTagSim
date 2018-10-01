@@ -162,7 +162,23 @@ data(woasst)
 
 # par(mfrow=c(1,2))
 par(mar = c(2,2,2,4))
-image.plot(woasst$lon, woasst$lat, apply(woasst$sst, 1:2, mean, na.rm = T), axes = F)
+# image.plot(woasst$lon, woasst$lat, apply(woasst$sst, 1:2, mean, na.rm = T), axes = F)
+# map(add = T, col = 'white', fill = T)
+# # world(add=T) 
+# degAxis(1)
+# degAxis(2)
+# box()
+# title('World Ocean Atlas mean temperature')
+
+# image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65))
+# world(add=T, col = 'white')
+# title('Number of months with suitable surface temperature')
+
+
+# Do it as a raster!!
+sstr = flip(raster(xmn = min(woasst$lon), xmx = max(woasst$lon), ymn = min(woasst$lat), ymx = max(woasst$lat), resolution = c(diff(woasst$lon)[1], diff(woasst$lat)[1]), vals = t(apply(woasst$sst, 1:2, mean, na.rm = T))), 'y')
+
+plot(sstr, col = tim.colors(256), axes = F)
 map(add = T, col = 'white', fill = T)
 # world(add=T) 
 degAxis(1)
@@ -170,9 +186,6 @@ degAxis(2)
 box()
 title('World Ocean Atlas mean temperature')
 
-# image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65))
-# world(add=T, col = 'white')
-# title('Number of months with suitable surface temperature')
 ```
 
 
@@ -233,11 +246,18 @@ sstmat = list(lon = sort(unique(coordinates(rmask[[1]])[,1]))
 # sstdata[is.na(sstdata)] = 0
 sstmat$data = sstdata
 
-image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65), col = viridis(12), axes = F)
+# image.plot(sstmat$lon, sstmat$lat, apply(sstmat$data, 1:2, sum, na.rm=T), xlim = c(-100, 40), ylim = c(0,65), col = viridis(12), axes = F)
+
+sstmatr = t(flip(raster(apply(sstmat$data, 1:2, sum, na.rm = T)), 'x'))
+extent(sstmatr) = extent(sstr)
+#raster(xmn = min(sstmat$lon), xmx = max(sstmat$lon), ymn = min(sstmat$lat), ymx = max(sstmat$lat), resolution = c(560, 300), vals = apply(sstmat$data, 1:2, mean, na.rm = T))
+
+plot(sstmatr, xlim = c(-100, 40), ylim = c(0,65), col = viridis(12), axes = F)
 plot(map, add=T, col = 'white')
 # world(add=T, col = 'white')
 degAxis(1)
 degAxis(2)
+box()
 title('Number of months with suitable surface temperature')
 
 # rm(sstdata, sstdata2)
