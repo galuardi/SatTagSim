@@ -252,6 +252,8 @@ sstmatr = t(flip(raster(apply(sstmat$data, 1:2, sum, na.rm = T)), 'x'))
 extent(sstmatr) = extent(sstr)
 #raster(xmn = min(sstmat$lon), xmx = max(sstmat$lon), ymn = min(sstmat$lat), ymx = max(sstmat$lat), resolution = c(560, 300), vals = apply(sstmat$data, 1:2, mean, na.rm = T))
 
+par(mfrow=c(1,1))
+
 plot(sstmatr, xlim = c(-100, 40), ylim = c(0,65), col = viridis(12), axes = F)
 plot(map, add=T, col = 'white')
 # world(add=T, col = 'white')
