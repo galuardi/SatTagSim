@@ -1,7 +1,7 @@
 #' Get starting points
 #' Get starting points for simulations based on distribution of observed locations for a given month.
 #'
-#' @param dat input data. see \link{\code{nsdata}}
+#' @param dat input data. see data(nsdata)
 #' @param n number of starting points
 #' @param posnames names of the longitude and latitude columns in the data frame
 #'

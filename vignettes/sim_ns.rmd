@@ -6,6 +6,8 @@ output:
   pdf_document:
     fig_caption: yes
   html_document: null
+editor_options: 
+  chunk_output_type: console
 ---
 <!-- rmarkdown::html_vignette: -->
 <!--     fig_caption: yes -->
@@ -440,10 +442,11 @@ plot.uv.density(par.ns)
 #------------------------------------------------------------------------#
 # Set number of sims, simulation steps per month and number of years
 
-msims = 50  # simulations to be started in each month
-npmon = 1 # number of simulation steps per month.
+msims = 50 # simulations to be started in each month
+npmon = 4 # number of simulation steps per month.
 nyears = 2 # number of years to simulate for each track
-sstol = 2 # number of suitable months for each daily simulation step
+nreps = 167 # number of replicates for variance calculation
+sstol = 2   # number of suitable months for each daily simulation step
 #------------------------------------------------------------------------#
 
 simvals = data.frame(sim_param = c('msims','npmon','nyears','sstol'), value = c(msims, npmon, nyears, sstol), description = c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track','number of suitable months for each daily simulation step'))
@@ -542,11 +545,64 @@ rm(test, sp, subsp)
 simdat = unlist(simdat, recursive = F)
 ```
 
+```{r run a lot in parallel, eval = F}
+stime = Sys.time()
+
+mcoptions = setup.parallel()
+
+for(j in 58:nreps){
+  simdat = list()
+
+#---------------------------------------------------------------#
+# SIMULATIONS
+
+# print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'))
+print(paste0('simulating ', msims*12, ' tracks: ',j ,' of ', nreps, ' times'))
+# stime = Sys.time()
+simdat = list()
+
+ncores = detectCores()
+cl = makeCluster(ncores)
+registerDoParallel(cl, cores = ncores)
+
+for(i in 1:12){
+  subsp = spts[[i]][sample(1:nrow(spts[[i]]), msims, replace = T),]
+  subsp$row = 1:nrow(subsp)
+  sp = dlply(subsp, 'row', function(x) x[,1:2])
+  simorder = as.numeric(morder[i,])
+  
+  print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
+  
+  # test = make.sim.track.par(tpar = simpar, morder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
+    test = make.sim.track.par2(par_array = simpar, boxmat = boxmat, simorder = rep(simorder, nyears), sp = sp, bath = bath, sstmat = sstmat, seaslen = npmon, sstol = sstol, mcoptions = mcoptions)
+  simdat[[i]] = test
+  runtime = Sys.time()-stime
+  print(paste0('elapsed time: ', runtime))
+    simdat[[i]] = test
+  }
+
+  stopCluster(cl)
+
+  simdat = unlist(simdat, recursive = F)
+  # save('simdat' , file = paste0('VAR_SIMS_WABFT_LARGE/WABFT_1008_', j, '.Rdata'))
+  save('simdat' , file = paste0('SIM_NS_PC', j, '.Rdata'))
+  runtime = Sys.time()-stime
+  print(paste0('elapsed time: ', runtime))
+}
+ runtime = Sys.time()-stime
+write.table(runtime, file = 'pc_runtime.txt')
+
+
+```
+
+```
+
+
 \newpage
 
 ## Make a dataframe and raster of results
 
-```{r make simdatdf, data frame eval = T, fig.cap = 'Posterior distribution of simulated tracks, 1-minute cell size, by season'}
+```{r make simdatdf data frame, eval = T, fig.cap = 'Posterior distribution of simulated tracks, 1-minute cell size, by season'}
 # MAKE A DATA FRAME OF THE RESULTS
 simdatdf = ldply(simdat)
 seasons = c("Winter", "Spring", "Summer", "Fall")
