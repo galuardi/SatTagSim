@@ -18,7 +18,7 @@ a data frame of TagID, Month, u, v and a default value of D (diffusion) for each
 Function to get monthly u and v advection parameters for a group of tracks
 }
 \examples{
-see Vignettes
+
 }
 \seealso{
 \code{\link{merge.par}} \code{\link{get.uv}}

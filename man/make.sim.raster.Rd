@@ -4,8 +4,7 @@
 \alias{make.sim.raster}
 \title{Make sim raster}
 \usage{
-make.sim.raster(simdat, xmn = -100, xmx = 30, ymn = 0, ymx = 60,
-  boxsize = 60)
+make.sim.raster(simdat, xmn = -100, xmx = 30, ymn = 0, ymx = 60, boxsize = 60)
 }
 \arguments{
 \item{simdat}{Simulated track returned from \code{\link{make.sim.track.par}}}

@@ -4,8 +4,14 @@
 \alias{plot.boxtrans}
 \title{plot.boxtrans}
 \usage{
-plot.boxtrans(boxtrans, palette = "BrBG", text.col = "white",
-  text.size = 6, strip.text = 15, axis.text = 20)
+\method{plot}{boxtrans}(
+  boxtrans,
+  palette = "BrBG",
+  text.col = "white",
+  text.size = 6,
+  strip.text = 15,
+  axis.text = 20
+)
 }
 \arguments{
 \item{boxtrans}{transition matrices returned from \code{\link{get.trans.prob}}}

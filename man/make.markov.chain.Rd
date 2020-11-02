@@ -4,8 +4,7 @@
 \alias{make.markov.chain}
 \title{Generate Markov chains from a set of transition matrices}
 \usage{
-make.markov.chain(boxtrans = boxtrans, s.init = 3, sorder = rep(1:4,
-  1000))
+make.markov.chain(boxtrans = boxtrans, s.init = 3, sorder = rep(1:4, 1000))
 }
 \arguments{
 \item{boxtrans}{list of transition matrices. Ususally this will be seasonal; winter, spring, summer and fall}

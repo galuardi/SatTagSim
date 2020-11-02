@@ -4,9 +4,18 @@
 \alias{make.sim.track.par2}
 \title{Simulate tracks in parallel}
 \usage{
-make.sim.track.par2(par_array = par_array, simorder = simorder, sp = spts,
-  bath = bath, sstmat = sstmat, boxmat = boxmat, seaslen = 30,
-  sstol = 2, mcoptions = setup.parallel(), ...)
+make.sim.track.par2(
+  par_array = par_array,
+  simorder = simorder,
+  sp = spts,
+  bath = bath,
+  sstmat = sstmat,
+  boxmat = boxmat,
+  seaslen = 30,
+  sstol = 2,
+  mcoptions = setup.parallel(),
+  ...
+)
 }
 \arguments{
 \item{par_array}{array of temporal and spatially explcit simulation parameters @seealso xxxx}

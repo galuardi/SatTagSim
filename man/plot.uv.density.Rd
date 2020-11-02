@@ -4,8 +4,14 @@
 \alias{plot.uv.density}
 \title{Diagnostic ggplots of advection}
 \usage{
-plot.uv.density(allpar, save = F, fname = NULL, ulims = c(-50, 50),
-  vlims = c(-50, 50), ...)
+\method{plot}{uv.density}(
+  allpar,
+  save = F,
+  fname = NULL,
+  ulims = c(-50, 50),
+  vlims = c(-50, 50),
+  ...
+)
 }
 \arguments{
 \item{allpar}{data frame returned from \code{\link{get.allpar}}}

@@ -4,7 +4,13 @@
 \alias{plot.seas.change}
 \title{Plot percent change from previous season}
 \usage{
-plot.seas.change(sr, box = NULL)
+\method{plot}{seas.change}(
+  sr,
+  box = NULL,
+  col = fields::tim.colors(100),
+  par = c(2, 2),
+  mar = c(2, 2, 2, 2)
+)
 }
 \arguments{
 \item{sr}{list of seasonal raster results from}

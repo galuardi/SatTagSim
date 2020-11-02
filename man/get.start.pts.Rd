@@ -5,11 +5,16 @@
 \title{Get starting points
 Get starting points for simulations based on distribution of observed locations for a given month.}
 \usage{
-get.start.pts(dat, n = 100, months = 1:12, mask = rmask,
-  posnames = c("coords.x1", "coords.x2"))
+get.start.pts(
+  dat,
+  n = 100,
+  months = 1:12,
+  mask = rmask,
+  posnames = c("coords.x1", "coords.x2")
+)
 }
 \arguments{
-\item{dat}{input data. see \link{\code{nsdata}}}
+\item{dat}{input data. see data(nsdata)}
 
 \item{n}{number of starting points}
 

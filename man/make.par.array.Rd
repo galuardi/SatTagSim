@@ -5,8 +5,16 @@
 \title{Make spatio-temporal array of movement parameters
 This function generates monthly advection and diffusion mean and standard deviation for each area in the spatial strata used. Missing months default to the previous months value. Missing areas should be filled in by the user.}
 \usage{
-make.par.array(tracks, inbox, rasbox = NULL, rrows = 26 * 5, rcols = 29 *
-  5, use_wts = NULL, missvec = NULL, fillvec = NULL)
+make.par.array(
+  tracks,
+  inbox,
+  rasbox = NULL,
+  rrows = 26 * 5,
+  rcols = 29 * 5,
+  use_wts = NULL,
+  missvec = NULL,
+  fillvec = NULL
+)
 }
 \arguments{
 \item{tracks}{spatial points data frame of tracks}
@@ -24,6 +32,9 @@ make.par.array(tracks, inbox, rasbox = NULL, rrows = 26 * 5, rcols = 29 *
 \item{missvec}{vector of missing rows (areas) in final output. This can be obtained by running once with this function left as NULL}
 
 \item{fillvec}{vector of replacement rows for missvec. This is a subjectie decision by the user and is dependent on the spatial strata used}
+}
+\value{
+
 }
 \description{
 Make spatio-temporal array of movement parameters

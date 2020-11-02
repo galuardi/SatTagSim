@@ -11,7 +11,7 @@
 #' @export
 #'
 #' @examples
-#' see Vignettes
+#'
 get.allpar <- function (tracks = nsfish, parallel = F){
   # require(plyr)
   getuvsub = function(temp){

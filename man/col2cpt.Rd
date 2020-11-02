@@ -4,8 +4,13 @@
 \alias{col2cpt}
 \title{Make a GMT color ramp file (.cpt)}
 \usage{
-col2cpt(nmin = 0, nmax = 1, clist = c("lightcyan", "royalblue", "blue",
-  "lemonchiffon", "orange", "red"), outfile = "mycol.cpt", length = 100)
+col2cpt(
+  nmin = 0,
+  nmax = 1,
+  clist = c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"),
+  outfile = "mycol.cpt",
+  length = 100
+)
 }
 \arguments{
 \item{nmin}{numeric minimum of the ramp}

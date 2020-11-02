@@ -4,7 +4,7 @@
 \alias{get.first.box}
 \title{Get first occupied area in a time frame}
 \usage{
-get.first.box(simdat, syear = 2000, boxes = box7, seas.len = 90)
+get.first.box(simdat, syear = 2000, boxes = box7, seas.len = 90, nyears = 2)
 }
 \arguments{
 \item{simdat}{list of simulated tracks from \code{\link{make.sim.track.par}}}

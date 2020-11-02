@@ -4,9 +4,17 @@
 \alias{make.sim.track.par}
 \title{Simulate tracks in parallel}
 \usage{
-make.sim.track.par(tpar = tpar, morder = morder, sp = spts, bath = bath,
-  sstmat = sstmat, seaslen = 30, sstol = 2,
-  mcoptions = setup.parallel(), ...)
+make.sim.track.par(
+  tpar = tpar,
+  morder = morder,
+  sp = spts,
+  bath = bath,
+  sstmat = sstmat,
+  seaslen = 30,
+  sstol = 2,
+  mcoptions = setup.parallel(),
+  ...
+)
 }
 \arguments{
 \item{tpar}{data frame of simulation parameters}
