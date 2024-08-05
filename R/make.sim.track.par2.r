@@ -274,7 +274,7 @@ make.sim.track.par2 <- function(par_array = par_array, simorder = simorder, sp =
 
         if(!is.null(bath)){
           while(.get.bath(t1[1], t1[2], bath)>0){
-            t1 = simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2,]
+            t1 = SatTagSim::simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2,]
           }
         }
         # if(ii>5) break

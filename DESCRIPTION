@@ -1,8 +1,8 @@
 Package: SatTagSim
 Type: Package
 Title: Simulation from Electronic Tags
-Version: 0.1.2
-Date: 2017-6-14
+Version: 0.1.3
+Date: 2024-08-04
 Author: Benjamin Galuardi
 Maintainer: <bgaluardi@umassd.edu>
 Description: Simulation from Kalman filtered electronic tag results to produce
@@ -11,6 +11,7 @@ License: GPL-3
 Depends:
     MASS,
     fields,
+    dplyr,
     plyr,
     raster,
     truncnorm,
@@ -37,5 +38,5 @@ Suggests:
 NeedsCompilation: no
 ByteCompile: yes
 LazyData: TRUE
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 #VignetteBuilder: knitr
