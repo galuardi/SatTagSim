@@ -8,16 +8,22 @@ output:
   html_document: null
 editor_options: 
   chunk_output_type: console
+bibliography: references.bib
 ---
+
 <!-- rmarkdown::html_vignette: -->
+
 <!--     fig_caption: yes -->
+
 <!-- vignette: > -->
+
 <!--   %\VignetteIndexEntry{Simulate using SatTagSim} -->
+
 <!--   %\VignetteEngine{knitr::rmarkdown} -->
+
 <!--   %\VignetteEncoding{UTF-8} -->
 
 ##Simulation of Nova Scotia tagged Atlantic bluefin tuna \emph{(Thunnus thynnus)} and get seasonal transition matrices using an 11-box spatial stratification.
-
 
 ```{r global_options, include = FALSE}
 knitr::opts_chunk$set(echo  =  FALSE, warning  =  FALSE, 
@@ -28,7 +34,7 @@ knitr::opts_chunk$set(echo  =  FALSE, warning  =  FALSE,
 											, fig.height  =  6
 											, dev  =  'html')
 
-```	
+```
 
 load background data and set up parallel
 
@@ -37,7 +43,8 @@ library(SatTagSim)
 # library(analyzepsat)
 library(rworldmap)
 library(rworldxtra)
-library(knitr)
+library(tidyverse)
+library(sf)
 data(box7)
 data(box11)
 data(rmask)
@@ -49,26 +56,52 @@ map  =  rworldmap::getMap(resolution  =  'high')
 ```
 
 ## Tag data:
-```{r plot_tags, fig.width  =  9, fig.height  =  6, caption  =  "31 Atlantic bluefin tuna, tagged in Nova Scotia, Canada, in 2005 and 2006 (Galuardi et al. 2010)" }
-par(mar  =  c(3,3,3,6))
-plot(nsfish, col  =  1, pch  =  19, cex  =  .6, ylim  =  c(20, 50), xlim  =  c(-100, 0))
-sapply(1:12, function(x) points(nsfish[nsfish$Month==x,1:2], col  =  month.colors[x==month.colors[,1],2], pch  =  19))
 
-plot(map, add = T, col  =  'cornsilk4', fill = T)
-degAxis(1)
-degAxis(2)
-box()
-# analyzepsat::.add.month.scale()
+```{r plot_tags, fig.width  =  9, fig.height  =  6, caption  =  "31 Atlantic bluefin tuna, tagged in Nova Scotia, Canada, in 2005 and 2006 (Galuardi et al. 2010)" }
+# par(mar  =  c(3,3,3,6))
+# plot(nsfish, col  =  1, pch  =  19, cex  =  .6, ylim  =  c(20, 50), xlim  =  c(-100, 0))
+# sapply(1:12, function(x) points(nsfish[nsfish$Month==x,1:2], col  =  month.colors[x==month.colors[,1],2], pch  =  19))
+# 
+# plot(map, add = T, col  =  'cornsilk4', fill = T)
+# degAxis(1)
+# degAxis(2)
+# box()
+# # analyzepsat::.add.month.scale()
+
+myworld = rworldmap::countriesLow %>% sf::st_as_sf()
+
+# cols <- paste0("'",month.colors[,1], "'='", month.colors[,2],"'")
+cols = c(month.colors[,2])
+names(cols) = month.colors[,1]
+
+nsfish %>% 
+  sf::st_as_sf() %>% 
+  mutate(Month = as.factor(Month)) %>% 
+  st_set_crs(4326) %>% 
+ggplot()+
+  geom_sf(aes(col = Month))+
+  scale_color_manual(values = cols, aesthetics = c("colour", "fill"), na.value = NA)+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  coord_sf(xlim = c(-100, -15), ylim = c(10, 50), crs = NULL, datum = sf::st_crs(4326) )+
+  theme_bw()
+
 ```
 
 \newpage
 
-
 ```{r months at liberty check, eval  =  F}
 # length of deployments
-ddply(as.data.frame(nsfish), c('TagID'), function(x) data.frame(nmonths  =  length(unique(x$Month))))
-```
 
+# ddply(as.data.frame(nsfish), c('TagID'), function(x) data.frame(nmonths  =  length(unique(x$Month))))
+
+nsfish %>% 
+  sf::st_as_sf() %>% 
+  group_by(TagID) %>% 
+  dplyr::summarise(nmonths = n_distinct(Month)) %>% 
+  as.data.frame() %>% 
+  dplyr::select(-geometry)
+
+```
 
 \newpage
 
@@ -78,30 +111,55 @@ make.tag.raster  <- function(simdat, xmn  =  -100, xmx  =  30, ymn  =  0, ymx  =
   # require(raster)
   if(class(simdat)=="SpatialPointsDataFrame"){
       simdat  =  as.data.frame(simdat)
+        coordinates(simdat)  =  ~Longitude+Latitude
   }
   r  =  raster(nrow = (ymx-ymn)*60/boxsize, ncol =  (xmx-xmn)*60/boxsize, xmn  =  xmn, xmx  =  xmx, ymn  =  ymn, ymx  =  ymx)
   simdat$CID  =  1
-  coordinates(simdat)  =  ~Longitude+Latitude
+
   sr  =  rasterize(simdat, r, field  =  'CID', fun = 'count') #[[1]]
   return(sr)
 }
 
-r  =  dlply(as.data.frame(nsfish), 'Month', function(x) make.tag.raster(x))
+ras2df = function(r){
+  rpts  =  coordinates(r)
+  rpts = rpts %>%
+    as_tibble() %>%
+    mutate(val = as.vector(values(r)))
+  rpts
+}
 
-r  =  make.tag.raster(nsfish)
+# r  =  dlply(as.data.frame(nsfish), 'Month', function(x) make.tag.raster(x))
 
-library(viridis)
-plot(r, col  =  rev(viridis(100)), ylim  =  c(20, 50), xlim  =  c(-100, 0), axes  = F)
-world(add = T, col  =  'cornsilk4', fill = T)
-degAxis(1)
-degAxis(2)
-box()
+rdf  =  make.tag.raster(nsfish) %>% 
+  ras2df()
+# 
+# library(viridis)
+# plot(r, col  =  rev(viridis(100)), ylim  =  c(20, 50), xlim  =  c(-100, 0), axes  = F)
+# world(add = T, col  =  'cornsilk4', fill = T)
+# degAxis(1)
+# degAxis(2)
+# box()
+
+myworld = rworldmap::countriesLow %>% sf::st_as_sf()
+
+ggplot()+
+  geom_tile(rdf %>% filter(val > .05), mapping = aes(x, y, fill = val))+
+  # scale_fill_gradientn(values = , colours = rev(viridis(100)), na.value = NA)+
+  scale_fill_viridis_c()+
+  # geom_sf(box11sf, mapping = aes(), col = 'salmon', fill = 'transparent', size = 1)+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  coord_sf(xlim = c(-100, -15), ylim = c(10, 50), crs = NULL, datum = sf::st_crs(4326) )+
+  xlab('')+
+  ylab('')+
+  # facet_wrap(~season)+
+  theme_bw()
 
 ```
 
 <!-- \newpage -->
 
 <!-- ## Length of deployment by size -->
+
 ```{r plot_DAL, eval  =  F, caption  =  'Days at liberty'}
 # pdat  =  ddply(as.data.frame(nsfish), .(TagID, Length), .fun = function(x) data.frame(DAL  =  nrow(x)))
 # 
@@ -111,23 +169,34 @@ box()
 
 ```
 
-
 \newpage
+
 ## Spatial strata in this package
 
 ```{r plot_box7, fig.show  =  'asis', echo  =  F, eval  =  T, fig.width  =  8, fig.height  =  6, fig.cap  =  '7- box stratification from Kerr et al. (2016) operational model'}
 # library(fields)
 # library(raster)
 # library(SatTagSim)
-# data(box7)
-plot(box7, xlim  =  c(-100, 40), ylim  =  c(0,65))
-world(add = T)
-plot(box7, add  =  T, border  =  'salmon', lwd = 2)
-text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data[,3], cex  =  2, col  =  'darkred')
-degAxis(1)
-degAxis(2)
-box()
-title('7-box')
+data(box7)
+# plot(box7, xlim  =  c(-100, 40), ylim  =  c(0,65))
+# world(add = T)
+# plot(box7, add  =  T, border  =  'salmon', lwd = 2)
+# text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data[,3], cex  =  2, col  =  'darkred')
+# degAxis(1)
+# degAxis(2)
+# box()
+# title('7-box')
+
+box7 %>% 
+  sf::st_as_sf() %>% 
+  ggplot()+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  geom_sf(col = 'salmon', lwd = 1, fill = 'transparent')+
+  coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  geom_text(data = box7@data, inherit.aes = F, mapping = aes(coordinates(box7)[,1], coordinates(box7)[,2]), cex = 8, label =  box7@data$Zone, col = 'darkred')+
+  xlab('')+
+  ylab('')+
+  theme_bw()
 ```
 
 \newpage
@@ -149,11 +218,9 @@ box()
 title('11-box')
 ```
 
-
 \newpage
 
 ## Environmental data in this package
-
 
 ```{r plot_WOA, eval  =  T, fig.show  =  'asis', fig.cap  =  'World Ocean Atlas (2013) mean temperature'}
 library(fields)
@@ -190,32 +257,57 @@ title('World Ocean Atlas mean temperature')
 
 ```
 
-
 \newpage
 
-## Set up the temperature constraint field. 
+## Set up the temperature constraint field.
 
 This can be done several ways. The preferred method is to use a running average of suitability, by month, for 12 months. In this manner, there is not a hard limit as to whether a fish may be in the area or not, but does provide a selection criteria that is weighted toward the suitability in that month.
 
-The temperature field provided `data(rmask)` is a surface temperature suitability for bluefin tuna, based on tag measured temperatures. 
+The temperature field provided `data(rmask)` is a surface temperature suitability for bluefin tuna, based on tag measured temperatures.
 
 ```{r plot_ecdf, eval  =  T, fig.show  =  'asis',  fig.cap  =  'Tag Measured Temperatures'}
-dat  =  nsfish
+# dat  =  nsfish
+# 
+# par(mfrow = c(3,4))
+# par(mar  =  c(4,4,4,4))
+# 
+# for(i in 1:12){
+# 	plot(ecdf(dat$MaxTemp[dat$Month==i]), main  =  month.name[i], xlab  =  '' ,ylab  =  '')
+# 	# hist(dat$MaxTemp[seasidx[[i]]], breaks = 30, main = seasons[i], xlim  =  c(0, 40))
+# 	mtemp  =  mean(dat$MaxTemp[dat$Month==i], na.rm = T)
+# 	sdtemp  =  sd(dat$MaxTemp[dat$Month==i], na.rm = T)
+# 	abline(v = mtemp, lwd = 2, col = 2)
+# 	abline(v = quantile(dat$MaxTemp[dat$Month==i], c(0.025, .975),na.rm = T), lwd = 2, col = 4)
+# 	# print(quantile(dat$MaxTemp[dat$Month==i], c(0.025, .975),na.rm = T))
+# }
 
-par(mfrow = c(3,4))
-par(mar  =  c(4,4,4,4))
+nsfishdf =  nsfish %>% 
+  sf::st_as_sf() 
 
-for(i in 1:12){
-	plot(ecdf(dat$MaxTemp[dat$Month==i]), main  =  month.name[i], xlab  =  '' ,ylab  =  '')
-	# hist(dat$MaxTemp[seasidx[[i]]], breaks = 30, main = seasons[i], xlim  =  c(0, 40))
-	mtemp  =  mean(dat$MaxTemp[dat$Month==i], na.rm = T)
-	sdtemp  =  sd(dat$MaxTemp[dat$Month==i], na.rm = T)
-	abline(v = mtemp, lwd = 2, col = 2)
-	abline(v = quantile(dat$MaxTemp[dat$Month==i], c(0.025, .975),na.rm = T), lwd = 2, col = 4)
-	# print(quantile(dat$MaxTemp[dat$Month==i], c(0.025, .975),na.rm = T))
-}
+nsfish_vlines = nsfishdf %>% 
+  as.data.frame() %>% 
+  group_by(Month) %>% 
+  dplyr::summarise(meant = mean(MaxTemp, na.rm = T)
+                   , sdt =  sd(MaxTemp, na.rm = T)
+                   , qlo = quantile(MaxTemp, .025, na.rm = T)
+                   , qhi = quantile(MaxTemp, .975, na.rm = T)) %>% 
+ mutate(sdt_low = meant - 1.96*sdt, sdt_hi =  meant + 1.96*sdt) 
+
+ nsfishdf %>% 
+   mutate(`Month Name` = month.name[Month]) %>% 
+  ggplot(aes(MaxTemp)) +
+  stat_ecdf(geom = "step")+
+  geom_vline(data = nsfish_vlines, aes(xintercept = meant), color = 'red')+
+   geom_vline(data = nsfish_vlines, aes(xintercept = qlo), color = 'lightblue', size = .75, linetype = 5)+
+   geom_vline(data = nsfish_vlines, aes(xintercept = qhi), color = 'lightblue', size = .75, linetype = 5)+
+  facet_wrap(~Month)+
+   ylab('')+
+   theme_light()
+
+
 ```
-Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen 
+
+Based on the plots, a range of $10-28\,^{\circ}\mathrm{C}$ were chosen
 
 \newpage
 
@@ -403,7 +495,6 @@ simpar  =  make.par.array(tracks  =  nsfish, inbox  =  box11, rasbox  =  NULL, r
 # simpar  =  merge.par(par.ns, d.ns, return.mean  =  T)
 ```
 
-
 ```{r show_params_table, eval  =  F}
 knitr::kable(simpar, caption  =  'Advection and Diffusion parameters for simulation. For these fish, a fixed diffusion was used during track estimation so there is no variance in D')
 ```
@@ -411,13 +502,15 @@ knitr::kable(simpar, caption  =  'Advection and Diffusion parameters for simulat
 \newpage
 
 ## Examine the tag based Diffusion parameters
+
 ```{r D_plot, fig.cap  =  'Distribution of diffusion (D) estimates by length (estimated CFL). All values here are identical as the track estimation routine used a fixed diffusion parameter. Here, D is measured as nautical $miles^2$/day', eval  =  T}
 
-pdat  =  ddply(as.data.frame(nsfish), .(TagID), .fun = function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
+# pdat  =  ddply(as.data.frame(nsfish), .(TagID), .fun = function(x) c(x$Length[1], x$D[1], x$Dsd[1]))
 
-pdat = nsfish |> 
-  as.data.frame() |> 
-  group_by(TagID) |> 
+pdat = nsfish  %>%  
+  sf::st_as_sf() %>% 
+  as.data.frame()  %>%  
+  group_by(TagID) %>%  
   dplyr::summarise(CFL = Length[1]
                    ,D = D[1]
                    , Dsd = Dsd[1])
@@ -425,11 +518,11 @@ pdat = nsfish |>
 # names(pdat)[2:4]  =  c('CFL','D','Dsd')
 
 ggplot(pdat, aes(x = CFL, y = D)) + 
-    geom_errorbar(aes(ymin = D-Dsd, ymax = D+Dsd), colour = "black", width = .1) +
-	geom_abline(aes(intercept = mean(D, na.rm = T), slope = 0, width  =  2),  colour = 'red')+
+    geom_errorbar(aes(ymin = D-Dsd, ymax = D+Dsd), colour = "black", lwd = .1) +
+	# geom_abline(aes(intercept = mean(D, na.rm = T), slope = 0, lwd  =  1,  colour = 'red'))+
 	# geom_abline(aes(intercept = mean(D+Dsd, na.rm = T), slope = 0, colour = 'blue', width  =  2))+
 	# geom_abline(aes(intercept = mean(D-Dsd, na.rm = T), slope = 0, colour = 'blue', width  =  2))+
-    geom_point( size = 3, shape = 21, fill = "white") + # 21 is filled circle
+    geom_point( cex = 3, shape = 21, fill = "white") + # 21 is filled circle
 	# theme(axis.text.x   =  element_blank())+
     ggtitle(paste0("D distributions for ",nrow(pdat) ," tagged fish") )
 ```
@@ -437,6 +530,7 @@ ggplot(pdat, aes(x = CFL, y = D)) +
 \newpage
 
 ## Examine the tag based Advection parameters
+
 ```{r uv_plot, fig.cap  =  'Distribution of monthly advection parameters. Wider distributions indicate greater variance. Units are nautical miles/day. This plot is not area specific but rather a general pattern of all fish within that month.'}
 par.ns  =  get.allpar(as.data.frame(nsfish))
 plot.uv.density(par.ns)
@@ -460,7 +554,7 @@ sstol  =  2   # number of suitable months for each daily simulation step
 
 simvals  =  data.frame(sim_param  =  c('msims','npmon','nyears','sstol'), value  =  c(msims, npmon, nyears, sstol), description  =  c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track','number of suitable months for each daily simulation step'))
 
-kable(simvals, caption  =  "Control parameters for simulation")
+knitr::kable(simvals, caption  =  "Control parameters for simulation")
 
 #------------------------------------------------------------------------#
 # Set month order of simulations to correspond to release month
@@ -474,14 +568,14 @@ for(i in 1:12){
 
 morder  =  data.frame(morder, row.names  =  month.abb)
 names(morder)  =  paste0('m',1:12)
-kable(morder, caption  =  'Month order for multi-month start simulation', row.names  =  T)
+knitr::kable(morder, caption  =  'Month order for multi-month start simulation', row.names  =  T)
 ```
 
 \newpage
 
 ## Set up starting points for multi-start month simulation
 
-Set any indices for size or other criteria here. This may also be done prior to the parameter calculation step. 
+Set any indices for size or other criteria here. This may also be done prior to the parameter calculation step.
 
 ```{r get_start_points, eval  =  T, echo  =  T}
 ns  =  as.data.frame(nsfish)
@@ -489,10 +583,36 @@ ns  =  ns[,c('TagID','Day','Month','Year','Longitude','Latitude')]
 spts  =  get.start.pts(ns, msims, months  =  1:12, posnames  =  c('Longitude','Latitude'))
 # str(spts)
 # plot(map, xlim  =  c(-100, 0), ylim  =  c(20, 50))
-# for(i in 1:12) points(spts[[i]], col  =  month.colors[which(as.numeric(month.colors[,1])==i),2], pch  =  19)
+# for(i in 1:12) points(spts[[i]], col  =  month.colors[which(as.numeric(month.colors[,1])==i),2], pch  =  3)
 # degAxis(1)
 # degAxis(2)
 # box()
+rdfm  =  nsfish %>% 
+  sf::st_as_sf() %>% 
+  filter(Month == 2) %>% 
+  make.tag.raster()
+
+values(rdfm) = values(rdfm)/(values(rdfm) %>% max(na.rm = T)) 
+  
+  
+rdfm = rdfm %>% ras2df()
+
+# names(rdfm)[3] = 'val'
+
+rdfm %>% filter(val > .05) %>% 
+ggplot()+
+  geom_tile(mapping = aes(x, y, fill = val))+
+  # scale_fill_gradientn(values = , colours = rev(viridis(100)), na.value = NA)+
+  scale_fill_viridis_c()+
+  # geom_sf(box11sf, mapping = aes(), col = 'salmon', fill = 'transparent', size = 1)+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  geom_point(data = spts[[2]], mapping = aes(x, y), size = .4, ,col = 'orangered')+
+  coord_sf(xlim = c(-100, -40), ylim = c(20, 50), crs = NULL, datum = sf::st_crs(4326) )+
+  xlab('')+
+  ylab('')+
+  # facet_wrap(~season)+
+  theme_bw()+
+  theme(legend.title=element_blank())
 
 ```
 
@@ -529,7 +649,7 @@ print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'
 stime  =  Sys.time()
 simdat  =  list()
 
-ncores  =  detectCores()/2
+ncores  =  detectCores()-1
 cl  =  makeCluster(ncores)
 registerDoParallel(cl, cores  =  ncores)
 
@@ -651,6 +771,7 @@ for(i in 1:4){
 }
 
 ```
+
 \newpage
 
 ## Get seasonal transition matrices using the 11 box model
@@ -738,6 +859,7 @@ plot.seas.change(sr, col  =  (fields::tim.colors(256)), mar  =  c(2,2,2,4), box 
 ```
 
 ## Compare monthly changes, spatially
+
 ```{r plot_seas_change_month, eval  =  T, fig.cap  =  'Monthly shifts (transitions) expressed spatially.  7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
 sr  =  dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize  =  150))
 plot.seas.change(sr, col  =  (fields::tim.colors(256)), par  =  c(3,4), mar  =  c(2,2,2,4), box  =  box7)

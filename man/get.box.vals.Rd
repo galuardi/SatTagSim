@@ -11,8 +11,14 @@ get.box.vals(dat, boxes)
 
 \item{boxes}{spatial polygons of overlay strata}
 }
+\value{
+
+}
 \description{
 Get overlay of boxes from a track
+}
+\examples{
+
 }
 \seealso{
 \code{\link{get.first.box}}
