@@ -50,7 +50,7 @@ data(box11)
 data(rmask)
 data(nsfish)
 data(myramps, package  =  'analyzepsat')
-map  =  rworldmap::getMap(resolution  =  'high')
+
 # sst  =  rmask2array(rmask)
 # mcoptions  =  setup.parallel()
 ```
@@ -68,7 +68,8 @@ map  =  rworldmap::getMap(resolution  =  'high')
 # box()
 # # analyzepsat::.add.month.scale()
 
-myworld = rworldmap::countriesLow %>% sf::st_as_sf()
+# myworld = rworldmap::countriesLow %>% sf::st_as_sf()
+myworld =  rworldmap::getMap(resolution  =  'high') %>% sf::st_as_sf()
 
 # cols <- paste0("'",month.colors[,1], "'='", month.colors[,2],"'")
 cols = c(month.colors[,2])
@@ -131,7 +132,8 @@ ras2df = function(r){
 # r  =  dlply(as.data.frame(nsfish), 'Month', function(x) make.tag.raster(x))
 
 rdf  =  make.tag.raster(nsfish) %>% 
-  ras2df()
+  ras2df() %>% 
+  dplyr::rename('locations' = 'val')
 # 
 # library(viridis)
 # plot(r, col  =  rev(viridis(100)), ylim  =  c(20, 50), xlim  =  c(-100, 0), axes  = F)
@@ -140,15 +142,15 @@ rdf  =  make.tag.raster(nsfish) %>%
 # degAxis(2)
 # box()
 
-myworld = rworldmap::countriesLow %>% sf::st_as_sf()
+# myworld = rworldmap::countriesLow %>% sf::st_as_sf()
 
 ggplot()+
-  geom_tile(rdf %>% filter(val > .05), mapping = aes(x, y, fill = val))+
+  geom_tile(rdf %>% filter(locations > .05), mapping = aes(x, y, fill = locations))+
   # scale_fill_gradientn(values = , colours = rev(viridis(100)), na.value = NA)+
   scale_fill_viridis_c()+
   # geom_sf(box11sf, mapping = aes(), col = 'salmon', fill = 'transparent', size = 1)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  coord_sf(xlim = c(-100, -15), ylim = c(10, 50), crs = NULL, datum = sf::st_crs(4326) )+
+  coord_sf(xlim = c(-100, 15), ylim = c(10, 50), crs = NULL, datum = sf::st_crs(4326) )+
   xlab('')+
   ylab('')+
   # facet_wrap(~season)+
@@ -843,7 +845,7 @@ for(i in 1:12){
   #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font = 2, cex = 1.2)
   plot(box11, add = T, border = 'salmon', lwd = 2)
   # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font = 2, cex = 1.2)
-  text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'black')
+  # text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'black')
   degAxis(1)
   degAxis(2)
   title(month.abb[i])
