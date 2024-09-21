@@ -49,7 +49,7 @@ data(box7)
 data(box11)
 data(rmask)
 data(nsfish)
-data(myramps, package  =  'analyzepsat')
+data(myramps)
 
 # sst  =  rmask2array(rmask)
 # mcoptions  =  setup.parallel()
@@ -69,7 +69,8 @@ data(myramps, package  =  'analyzepsat')
 # # analyzepsat::.add.month.scale()
 
 # myworld = rworldmap::countriesLow %>% sf::st_as_sf()
-myworld =  rworldmap::getMap(resolution  =  'high') %>% sf::st_as_sf()
+myworld =  rworldmap::getMap(resolution  =  'high') %>% 
+  sf::st_as_sf()
 
 # cols <- paste0("'",month.colors[,1], "'='", month.colors[,2],"'")
 cols = c(month.colors[,2])
@@ -179,7 +180,7 @@ ggplot()+
 # library(fields)
 # library(raster)
 # library(SatTagSim)
-data(box7)
+# data(box7)
 # plot(box7, xlim  =  c(-100, 40), ylim  =  c(0,65))
 # world(add = T)
 # plot(box7, add  =  T, border  =  'salmon', lwd = 2)
@@ -205,19 +206,36 @@ box7 %>%
 
 ```{r plot_box11, fig.show  =  'asis', echo  =  F, eval  =  T, fig.width  =  8, fig.height  =  6, fig.cap  =  '11- box stratification from Lauretta et al. (2016) spatial summary'}
 
-plot(box11, xlim  =  c(-100, 40), ylim  =  c(-50,80))
-world(add = T)
-plot(box11, add  =  T, border  =  'salmon', lwd = 2)
+# plot(box11, xlim  =  c(-100, 40), ylim  =  c(-50,80))
+# world(add = T)
+# plot(box11, add  =  T, border  =  'salmon', lwd = 2)
+# 
+# lpts  =  coordinates(box11)
+# lpts[4,2]  =  35
+# lpts[9,]  =  c(-25, 25)
+# 
+# text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'darkred')
+# degAxis(1)
+# degAxis(2)
+# box()
+# title('11-box')
 
 lpts  =  coordinates(box11)
 lpts[4,2]  =  35
 lpts[9,]  =  c(-25, 25)
 
-text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'darkred')
-degAxis(1)
-degAxis(2)
-box()
-title('11-box')
+box11 %>% 
+  sf::st_as_sf() %>% 
+  ggplot()+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  geom_sf(col = 'salmon', lwd = 1, fill = 'transparent')+
+  coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  geom_text(data = box11@data, inherit.aes = F, mapping = aes(lpts[,1], lpts[,2]), cex = 8, label =  box11@data$ID, col = 'darkred')+
+  xlab('')+
+  ylab('')+
+  theme_bw()
+
+
 ```
 
 \newpage
@@ -350,15 +368,29 @@ sstmatr  =  t(flip(raster(apply(sstmat$data, 1:2, sum, na.rm  =  T)), 'x'))
 extent(sstmatr)  =  extent(sstr)
 #raster(xmn  =  min(sstmat$lon), xmx  =  max(sstmat$lon), ymn  =  min(sstmat$lat), ymx  =  max(sstmat$lat), resolution  =  c(560, 300), vals  =  apply(sstmat$data, 1:2, mean, na.rm  =  T))
 
-par(mfrow = c(1,1))
+# par(mfrow = c(1,1))
+# 
+# plot(sstmatr, xlim  =  c(-100, 40), ylim  =  c(0,65), col  =  viridis::viridis(12), axes  =  F)
+# plot(map, add = T, col  =  'white')
+# # world(add = T, col  =  'white')
+# degAxis(1)
+# degAxis(2)
+# box()
+# title('Number of months with suitable surface temperature')
 
-plot(sstmatr, xlim  =  c(-100, 40), ylim  =  c(0,65), col  =  viridis(12), axes  =  F)
-plot(map, add = T, col  =  'white')
-# world(add = T, col  =  'white')
-degAxis(1)
-degAxis(2)
-box()
-title('Number of months with suitable surface temperature')
+woadf = ras2df(sstmatr) %>% 
+  dplyr::rename('Months' = 'val') 
+
+woadf$Months[woadf$Months == 0] = NA
+
+ggplot(woadf)+
+  geom_sf(myworld, mapping = aes(), col = 'grey20', fill = 'grey90')+
+  geom_tile(mapping = aes(x,y, fill = Months))+
+  scale_fill_viridis_c(na.value  = 'transparent')+
+  coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  xlab('')+
+  ylab('')+
+  theme_bw()
 
 # rm(sstdata, sstdata2)
 
@@ -521,9 +553,9 @@ pdat = nsfish  %>%
 
 ggplot(pdat, aes(x = CFL, y = D)) + 
     geom_errorbar(aes(ymin = D-Dsd, ymax = D+Dsd), colour = "black", lwd = .1) +
-	# geom_abline(aes(intercept = mean(D, na.rm = T), slope = 0, lwd  =  1,  colour = 'red'))+
-	# geom_abline(aes(intercept = mean(D+Dsd, na.rm = T), slope = 0, colour = 'blue', width  =  2))+
-	# geom_abline(aes(intercept = mean(D-Dsd, na.rm = T), slope = 0, colour = 'blue', width  =  2))+
+	geom_abline(aes(intercept = mean(D, na.rm = T), slope = 0), lwd  =  1,  colour = 'red')+
+	geom_abline(aes(intercept = mean(D+Dsd, na.rm = T), slope = 0), colour = 'blue', width  =  2)+
+	geom_abline(aes(intercept = mean(D-Dsd, na.rm = T), slope = 0), colour = 'blue', width  =  2)+
     geom_point( cex = 3, shape = 21, fill = "white") + # 21 is filled circle
 	# theme(axis.text.x   =  element_blank())+
     ggtitle(paste0("D distributions for ",nrow(pdat) ," tagged fish") )
@@ -556,7 +588,7 @@ sstol  =  2   # number of suitable months for each daily simulation step
 
 simvals  =  data.frame(sim_param  =  c('msims','npmon','nyears','sstol'), value  =  c(msims, npmon, nyears, sstol), description  =  c('simulations to be started in each month','number of simulation steps per month','number of years to simulate for each track','number of suitable months for each daily simulation step'))
 
-knitr::kable(simvals, caption  =  "Control parameters for simulation")
+knitr::kable(simvals, caption  =  "Control parameters for simulation") %>% kableExtra::kable_paper()
 
 #------------------------------------------------------------------------#
 # Set month order of simulations to correspond to release month
@@ -570,7 +602,7 @@ for(i in 1:12){
 
 morder  =  data.frame(morder, row.names  =  month.abb)
 names(morder)  =  paste0('m',1:12)
-knitr::kable(morder, caption  =  'Month order for multi-month start simulation', row.names  =  T)
+knitr::kable(morder, caption  =  'Month order for multi-month start simulation', row.names  =  T) %>% kableExtra::kable_paper()
 ```
 
 \newpage
