@@ -779,6 +779,9 @@ ncores  =  detectCores()
 cl  =  makeCluster(ncores)
 registerDoParallel(cl, cores  =  ncores)
 
+print(paste0('using ', ncores, ' cores '))
+
+
 for(i in 1:12){
   subsp  =  spts[[i]][sample(1:nrow(spts[[i]]), msims, replace  =  T),]
   subsp$row  =  1:nrow(subsp)
