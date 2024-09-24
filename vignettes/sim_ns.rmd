@@ -3,12 +3,11 @@ title: "Simulate using SatTagSim"
 author: "Benjamin Galuardi"
 date: '`r Sys.Date()`'
 output:
+  html_document: null
   pdf_document:
     fig_caption: yes
-  html_document: null
 editor_options: 
   chunk_output_type: console
-bibliography: references.bib
 ---
 
 <!-- rmarkdown::html_vignette: -->
@@ -32,7 +31,8 @@ knitr::opts_chunk$set(echo  =  FALSE, warning  =  FALSE,
 											, comment  =  FALSE
 											, fig.width  =  8
 											, fig.height  =  6
-											, dev  =  'html')
+											# , dev  =  'html'
+											)
 
 ```
 
@@ -715,7 +715,7 @@ boxmat$box  =  t(as.matrix(flip(rasbox, 2)))
 
 ## Run a single simulation in parallel
 
-```{r simulate, eval  =  T}
+```{r simulate, eval  =  F}
 
 mcoptions  =  setup.parallel()
 
@@ -764,7 +764,7 @@ stime  =  Sys.time()
 
 mcoptions  =  setup.parallel()
 
-for(j in 58:nreps){
+for(j in 1:50){
   simdat  =  list()
 
 #---------------------------------------------------------------#
@@ -775,8 +775,8 @@ print(paste0('simulating ', msims*12, ' tracks: ',j ,' of ', nreps, ' times'))
 # stime  =  Sys.time()
 simdat  =  list()
 
-ncores  =  detectCores()
-cl  =  makeCluster(ncores)
+ncores  =  detectCores()-20
+cl  =  makeCluster(ncores, type = 'FORK') # use the FORK! (on linux)
 registerDoParallel(cl, cores  =  ncores)
 
 print(paste0('using ', ncores, ' cores '))
@@ -791,7 +791,15 @@ for(i in 1:12){
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
   # test  =  make.sim.track.par(tpar  =  simpar, morder  =  rep(simorder, nyears), sp  =  sp, bath  =  bath, sstmat  =  sstmat, seaslen  =  npmon, sstol  =  sstol, mcoptions  =  mcoptions)
-    test  =  make.sim.track.par2(par_array  =  simpar, boxmat  =  boxmat, simorder  =  rep(simorder, nyears), sp  =  sp, bath  =  bath, sstmat  =  sstmat, seaslen  =  npmon, sstol  =  sstol, mcoptions  =  mcoptions)
+    test  =  make.sim.track.par2(par_array  =  simpar
+                                 , boxmat  =  boxmat
+                                 , simorder  =  rep(simorder, nyears)
+                                 , sp  =  sp
+                                 , bath  =  NULL
+                                 , sstmat  =  sstmat
+                                 , seaslen  =  npmon
+                                 , sstol  =  sstol
+                                 , mcoptions  =  mcoptions)
   simdat[[i]]  =  test
   runtime  =  Sys.time()-stime
   print(paste0('elapsed time: ', runtime))
@@ -802,7 +810,7 @@ for(i in 1:12){
 
   simdat  =  unlist(simdat, recursive  =  F)
   # save('simdat' , file  =  paste0('VAR_SIMS_WABFT_LARGE/WABFT_1008_', j, '.Rdata'))
-  save('simdat' , file  =  paste0('SIM_NS_PC', j, '.Rdata'))
+  save('simdat' , file  =  paste0('sims_server/SIM_NS_REDHAT', j, '.Rdata'))
   runtime  =  Sys.time()-stime
   print(paste0('elapsed time: ', runtime))
 }
@@ -811,6 +819,14 @@ write.table(runtime, file  =  'pc_runtime.txt')
 
 
 ```
+
+```{r load pre-simulated dataset, eval = T, echo = F}
+
+data('sim_example')
+# print(paste0('loading simulated ', length(spts)*msims, ' tracks for ', nyears, ' years'))
+
+```
+
 
 \newpage
 
@@ -860,8 +876,9 @@ sr |>
   scale_fill_gradientn(colors = mycol(256), na.value = NA)+
   facet_wrap(~season)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  geom_sf(box7 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
-    geom_text(data = box7@data, inherit.aes = F, mapping = aes(rep(coordinates(box7)[,1],4), rep(coordinates(box7)[,2],4)), cex = 8, label =  rep(box7@data$Zone, 4), col = 'darkred')+
+  geom_sf(box11 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
+    # geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(coordinates(box11)[,1],4), rep(coordinates(box11)[,2],4)), cex = 8, label =  rep(box11@data$ID, 4), col = 'darkred')+
+   geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(lpts[,1],4), rep(lpts[,2],4)), cex = 8, label =  rep(box11@data$ID, 4), col = 'darkred')+
     coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
   xlab('')+
   ylab('')+
@@ -896,8 +913,8 @@ sr |>
 ```{r get_transmat_rate, eval  =  T, caption  =  'Transitions expressed as a rate'}
 
 # try new version of function... it works!!
-datbox  =  get.first.box(simdat, 2000, box7, seas.len  =  npmon*3) # season length is number per month*3
-boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(7,7,4), perc  =  T)
+datbox  =  get.first.box(simdat, 2000, box11, seas.len  =  npmon*3) # season length is number per month*3
+boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(11, 11,4), perc  =  T)
 
 names(boxtrans)  =  seasons
 
@@ -907,8 +924,8 @@ plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12)
 ```{r get_transmat_total, eval  =  T, caption  =  'Transitions expressed as a total'}
 
 # try new version of function... it works!!
-datbox  =  get.first.box(simdat, 2000, box7, seas.len  =  npmon*3) # season length is number per month*3
-boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(7,7,4), perc  =  F)
+datbox  =  get.first.box(simdat, 2000, box11, seas.len  =  npmon*3) # season length is number per month*3
+boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(11,11,4), perc  =  F)
 
 names(boxtrans)  =  seasons
 
@@ -962,6 +979,9 @@ for(i in 1:12){
 
 sr = do.call(rbind, sr)
 
+# make month a factor so it plots in order
+sr$Month = factor(sr$Month, levels = month.name)
+
 
 sr |> 
   ggplot()+
@@ -971,7 +991,7 @@ sr |>
   scale_fill_gradientn(colors = mycol(256), na.value = NA)+
   facet_wrap(~Month)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  geom_sf(box7 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
+  geom_sf(box11 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
     # geom_text(data = box7@data, inherit.aes = F, mapping = aes(rep(coordinates(box7)[,1],4), rep(coordinates(box7)[,2],4)), cex = 8, label =  rep(box7@data$Zone, 4), col = 'darkred')+
     coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
   xlab('')+
@@ -1000,16 +1020,25 @@ sr |>
 # }
 ```
 
-## Compare seasonal changes, spatially
+<!-- ## Compare seasonal changes, spatially -->
 
-```{r plot_seas_change, eval  =  T, fig.cap  =  'Seasonal shifts (transitions) expressed spatially. 7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
+```{r plot_seas_change, eval  =  F, fig.cap  =  'Seasonal shifts (transitions) expressed spatially. 7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
 sr  =  dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize  =  150))
 plot.seas.change(sr, col  =  (fields::tim.colors(256)), mar  =  c(2,2,2,4), box  =  box7)
 ```
 
-## Compare monthly changes, spatially
+<!-- ## Compare monthly changes, spatially -->
 
-```{r plot_seas_change_month, eval  =  T, fig.cap  =  'Monthly shifts (transitions) expressed spatially.  7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
+```{r plot_seas_change_month, eval  =  F, fig.cap  =  'Monthly shifts (transitions) expressed spatially.  7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
 sr  =  dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize  =  150))
 plot.seas.change(sr, col  =  (fields::tim.colors(256)), par  =  c(3,4), mar  =  c(2,2,2,4), box  =  box7)
 ```
+
+## References
+Galuardi, B., Royer, F., Golet, W., Logan, J., Nielson, J., and Lutcavage, M. 2010. Complex Migration Routes of Atlantic Bluefin Tuna Question Current Population Structure Paradigm. Can J Fish Aquat Sci 67(6): 966–976.
+
+Kerr, L.A., Cadrin, S.X., Secor, D.H., and Taylor, N. 2016. Modeling the implications of stock mixing and life history uncertainty of Atlantic bluefin tuna. Can. J. Fish. Aquat. Sci. 74(11): 1990–2004.
+
+Lauretta, M.V., Hanke, A., Natale, A.D., and Quilez-Badia, G. 2016. Atlantic Bluefin Tuna Electronic Tagging Data Summary. Collect Vol Sci Pap 72(7): 1715–1728.
+
+
