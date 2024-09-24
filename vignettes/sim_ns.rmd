@@ -111,7 +111,7 @@ nsfish %>%
 
 make.tag.raster  <- function(simdat, xmn  =  -100, xmx  =  30, ymn  =  0, ymx  =  60, boxsize =  60){
   # require(raster)
-  if(class(simdat)=="SpatialPointsDataFrame"){
+  if(class(simdat)[1] =="SpatialPointsDataFrame"){
       simdat  =  as.data.frame(simdat)
         coordinates(simdat)  =  ~Longitude+Latitude
   }
@@ -267,13 +267,29 @@ par(mar  =  c(2,2,2,4))
 # Do it as a raster!!
 sstr  =  flip(raster(xmn  =  min(woasst$lon), xmx  =  max(woasst$lon), ymn  =  min(woasst$lat), ymx  =  max(woasst$lat), resolution  =  c(diff(woasst$lon)[1], diff(woasst$lat)[1]), vals  =  t(apply(woasst$sst, 1:2, mean, na.rm  =  T))), 'y')
 
-plot(sstr, col  =  tim.colors(256), axes  =  F)
-map(add  =  T, col  =  'white', fill  =  T)
-# world(add = T) 
-degAxis(1)
-degAxis(2)
-box()
-title('World Ocean Atlas mean temperature')
+
+sstr |> 
+  ras2df() |> 
+  ggplot()+
+  geom_tile(mapping = aes(x,y, fill = val))+
+  scale_fill_gradientn(colors = tim.colors(256), na.value = NA)+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+   coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326))+
+  theme_bw()+
+  ggtitle('World Ocean Atlas mean temperature')+
+  xlab('')+
+  ylab('')+
+  theme(legend.title=element_blank(), axis.title.x = element_text(''), axis.title.y = element_text(''))
+
+
+# 
+# plot(sstr, col  =  tim.colors(256), axes  =  F)
+# map(add  =  T, col  =  'white', fill  =  T)
+# # world(add = T) 
+# degAxis(1)
+# degAxis(2)
+# box()
+# title('World Ocean Atlas mean temperature')
 
 ```
 
@@ -434,21 +450,48 @@ sstdata2  =  sstdata
 sstdata2[is.na(sstdata2)]  =  0  
 sstmat$data  =  sstdata2
 
-par(mfrow = c(3,4))
-for(i in 1:12){
-  par(mar = c(1,1,2,5))
-plot(map, add = F, col  =  0, border  =  0, xlim  =  c(-95, 30), ylim  =  c(20,60), axes  =  F)
-image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim  =  c(-100, 40), ylim  =  c(0,65),  col  =  viridis(max(sstmat$data[,,i])+1), axes  =  F, add = T)
-plot(map, add = T, col  =  'white', axes  =  F)
-image.plot(sstmat$data[,,i], legend.only  =  T, col  =  viridis(max(sstmat$data[,,i])+1), nlevel  =  3)
-box()
-# world(add = T, col  =  'white')
-degAxis(1)
-degAxis(2)
-# degAxis(1, tck  =  0.02, las  =  2, hadj  =  -1)
-# degAxis(2, tck  =  0.02, las  =  1, hadj  =  -1)
-title(month.name[i])
-}
+
+
+sstdata2 = sstdata2 |> apply(3, FUN = function(x) {raster(x) |> t() |> flip()}) |> stack()
+
+extent(sstdata2) = c(min(sstmat$lon), max(sstmat$lon), min(sstmat$lat), max(sstmat$lat))
+
+names(sstdata2) = month.name
+
+sstdata_coords <- xyFromCell(sstdata2, seq_len(ncell(sstdata2)))
+sstdata2 <- stack(as.data.frame(getValues(sstdata2)))
+names(sstdata2) <- c('n_suitable', 'Month')
+sstdata2 <- cbind(sstdata_coords, sstdata2)
+
+
+ggplot(sstdata2) + 
+  geom_tile(aes(x, y, fill = n_suitable)) +
+  facet_wrap(~ Month) +
+  scale_fill_viridis_c() +
+  geom_sf(myworld, mapping = aes(), col = 'grey20', fill = 'grey90')+
+  coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  xlab('')+
+  ylab('')+
+  theme_bw()
+
+
+#   
+# 
+# par(mfrow = c(3,4))
+# for(i in 1:12){
+#   par(mar = c(1,1,2,5))
+# plot(map, add = F, col  =  0, border  =  0, xlim  =  c(-95, 30), ylim  =  c(20,60), axes  =  F)
+# image(sstmat$lon, sstmat$lat, sstmat$data[,,i], xlim  =  c(-100, 40), ylim  =  c(0,65),  col  =  viridis(max(sstmat$data[,,i])+1), axes  =  F, add = T)
+# plot(map, add = T, col  =  'white', axes  =  F)
+# image.plot(sstmat$data[,,i], legend.only  =  T, col  =  viridis(max(sstmat$data[,,i])+1), nlevel  =  3)
+# box()
+# # world(add = T, col  =  'white')
+# degAxis(1)
+# degAxis(2)
+# # degAxis(1, tck  =  0.02, las  =  2, hadj  =  -1)
+# # degAxis(2, tck  =  0.02, las  =  1, hadj  =  -1)
+# title(month.name[i])
+# }
 # title('Number of months with suitable surface temperature')
 
 ```
@@ -640,7 +683,7 @@ ggplot()+
   scale_fill_viridis_c()+
   # geom_sf(box11sf, mapping = aes(), col = 'salmon', fill = 'transparent', size = 1)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  geom_point(data = spts[[2]], mapping = aes(x, y), size = .4, ,col = 'orangered')+
+  geom_point(data = spts[[2]], mapping = aes(x, y), size = .7 ,col = 'orangered')+
   coord_sf(xlim = c(-100, -40), ylim = c(20, 50), crs = NULL, datum = sf::st_crs(4326) )+
   xlab('')+
   ylab('')+
@@ -683,8 +726,8 @@ print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'
 stime  =  Sys.time()
 simdat  =  list()
 
-ncores  =  detectCores()-1
-cl  =  makeCluster(ncores)
+ncores  =  detectCores()-10
+cl  =  makeCluster(ncores, type = 'FORK') # if on Linux, use the FORK!
 registerDoParallel(cl, cores  =  ncores)
 
 for(i in 1:12){
@@ -696,7 +739,15 @@ for(i in 1:12){
   print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
   
   # test  =  make.sim.track.par(tpar  =  simpar, morder  =  rep(simorder, nyears), sp  =  sp, bath  =  bath, sstmat  =  sstmat, seaslen  =  npmon, sstol  =  sstol, mcoptions  =  mcoptions)
-    test  =  make.sim.track.par2(par_array  =  simpar, boxmat  =  boxmat, simorder  =  rep(simorder, nyears), sp  =  sp, bath  =  bath, sstmat  =  sstmat, seaslen  =  npmon, sstol  =  sstol, mcoptions  =  mcoptions)
+    test  =  make.sim.track.par2(par_array  =  simpar
+                                 , boxmat  =  boxmat
+                                 , simorder  =  rep(simorder, nyears)
+                                 , sp  =  sp
+                                 , bath  =  NULL
+                                 , sstmat  =  sstmat
+                                 , seaslen  =  npmon
+                                 , sstol  =  sstol
+                                 , mcoptions  =  mcoptions)
   simdat[[i]]  =  test
   runtime  =  Sys.time()-stime
   print(paste0('elapsed time: ', runtime))
@@ -787,22 +838,51 @@ mycol  =  colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "
 
 sr  =  dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize  =  150))
 
-par(mfrow = c(2,2))
-par(mar = c(2,2,2,2))
+sr = lapply(sr, ras2df)
+
+names(sr) = seasons
+
 for(i in 1:4){
-  plot(sr[[i]]/max(values(sr[[i]]), na.rm = T), zlim  =  c(0.01,1), interp = F, col = mycol(256), axes = F)
-  rpts  =  xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
-  world(add = T, col = 'grey80', fill = F)
-  #   plot(box7, add = T, border = 'salmon', lwd = 2)
-  #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font = 2, cex = 1.2)
-  plot(box11, add = T, border = 'salmon', lwd = 2)
-  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font = 2, cex = 1.2)
-  text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'black')
-  degAxis(1)
-  degAxis(2)
-  title(seasons[i])
-  box()
+  sr[[i]]$season = seasons[i]
 }
+
+sr = do.call(rbind, sr)
+
+
+sr |> 
+  ggplot()+
+  geom_tile(mapping = aes(x,y, fill = val/max(val, na.rm = T)))+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  # geom_sf(box11 |> st_as_sf(), mapping = aes())+
+  scale_fill_gradientn(colors = mycol(256), na.value = NA)+
+  facet_wrap(~season)+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  geom_sf(box7 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
+    geom_text(data = box7@data, inherit.aes = F, mapping = aes(rep(coordinates(box7)[,1],4), rep(coordinates(box7)[,2],4)), cex = 8, label =  rep(box7@data$Zone, 4), col = 'darkred')+
+    coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  xlab('')+
+  ylab('')+
+  theme_bw()+
+  theme(strip.text.x = element_text(size = 12), strip.text.y = element_text(size = 12))+
+  labs(fill = 'Density')
+  
+# 
+# par(mfrow = c(2,2))
+# par(mar = c(2,2,2,2))
+# for(i in 1:4){
+#   plot(sr[[i]]/max(values(sr[[i]]), na.rm = T), zlim  =  c(0.01,1), interp = F, col = mycol(256), axes = F)
+#   rpts  =  xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
+#   world(add = T, col = 'grey80', fill = F)
+#   #   plot(box7, add = T, border = 'salmon', lwd = 2)
+#   #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font = 2, cex = 1.2)
+#   plot(box11, add = T, border = 'salmon', lwd = 2)
+#   # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font = 2, cex = 1.2)
+#   text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'black')
+#   degAxis(1)
+#   degAxis(2)
+#   title(seasons[i])
+#   box()
+# }
 
 ```
 
@@ -813,23 +893,23 @@ for(i in 1:4){
 ```{r get_transmat_rate, eval  =  T, caption  =  'Transitions expressed as a rate'}
 
 # try new version of function... it works!!
-datbox  =  get.first.box(simdat, 2000, box11, seas.len  =  npmon*3) # season length is number per month*3
-boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(11,11,4), perc  =  T)
+datbox  =  get.first.box(simdat, 2000, box7, seas.len  =  npmon*3) # season length is number per month*3
+boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(7,7,4), perc  =  T)
 
 names(boxtrans)  =  seasons
 
-plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12)
+plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12)
 ```
 
 ```{r get_transmat_total, eval  =  T, caption  =  'Transitions expressed as a total'}
 
 # try new version of function... it works!!
-datbox  =  get.first.box(simdat, 2000, box11, seas.len  =  npmon*3) # season length is number per month*3
-boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(11,11,4), perc  =  F)
+datbox  =  get.first.box(simdat, 2000, box7, seas.len  =  npmon*3) # season length is number per month*3
+boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(7,7,4), perc  =  F)
 
 names(boxtrans)  =  seasons
 
-plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12)
+plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12)
 ```
 
 ## Plot simulation results by starting month
@@ -867,22 +947,54 @@ for(i in 1:12){
 ```{r plot_simdf_bymonth, eval  =  T, fig.cap  =  'Posterior distribution of simulated tracks, 1-minute cell size, by month'}
 sr  =  dlply(simdatdf, 'Month', function(x) make.sim.raster(x, boxsize  =  150))
 
-par(mfrow = c(3, 4))
-par(mar = c(2,2,2,2))
+# sr  =  dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize  =  150))
+
+sr = lapply(sr, ras2df)
+
+names(sr) = month.name
+
 for(i in 1:12){
-  plot(sr[[i]]/max(values(sr[[i]]), na.rm = T), zlim  =  c(0.01,1), interp = F, col = mycol(256), axes = F)
-  rpts  =  xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
-  world(add = T, col = 'grey80', fill = F)
-  #   plot(box7, add = T, border = 'salmon', lwd = 2)
-  #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font = 2, cex = 1.2)
-  plot(box11, add = T, border = 'salmon', lwd = 2)
-  # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font = 2, cex = 1.2)
-  # text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'black')
-  degAxis(1)
-  degAxis(2)
-  title(month.abb[i])
-  box()
+  sr[[i]]$Month = month.name[i]
 }
+
+sr = do.call(rbind, sr)
+
+
+sr |> 
+  ggplot()+
+  geom_tile(mapping = aes(x,y, fill = val/max(val, na.rm = T)))+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  # geom_sf(box11 |> st_as_sf(), mapping = aes())+
+  scale_fill_gradientn(colors = mycol(256), na.value = NA)+
+  facet_wrap(~Month)+
+  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  geom_sf(box7 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
+    # geom_text(data = box7@data, inherit.aes = F, mapping = aes(rep(coordinates(box7)[,1],4), rep(coordinates(box7)[,2],4)), cex = 8, label =  rep(box7@data$Zone, 4), col = 'darkred')+
+    coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  xlab('')+
+  ylab('')+
+  theme_bw()+
+  theme(strip.text.x = element_text(size = 12), strip.text.y = element_text(size = 12))+
+  labs(fill = 'Density')
+  
+# 
+# 
+# par(mfrow = c(3, 4))
+# par(mar = c(2,2,2,2))
+# for(i in 1:12){
+#   plot(sr[[i]]/max(values(sr[[i]]), na.rm = T), zlim  =  c(0.01,1), interp = F, col = mycol(256), axes = F)
+#   rpts  =  xyFromCell(sr[[i]], which(!is.na(values(sr[[i]]))))
+#   world(add = T, col = 'grey80', fill = F)
+#   #   plot(box7, add = T, border = 'salmon', lwd = 2)
+#   #   text(coordinates(box7)[,1], coordinates(box7)[,2], box7@data$ID, font = 2, cex = 1.2)
+#   plot(box11, add = T, border = 'salmon', lwd = 2)
+#   # text(coordinates(box11)[,1], coordinates(box11)[,2], box11@data$ID, font = 2, cex = 1.2)
+#   # text(lpts[,1], lpts[,2], box11@data[,3], cex  =  2, col  =  'black')
+#   degAxis(1)
+#   degAxis(2)
+#   title(month.abb[i])
+#   box()
+# }
 ```
 
 ## Compare seasonal changes, spatially
