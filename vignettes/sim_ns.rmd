@@ -981,7 +981,6 @@ sr = do.call(rbind, sr)
 # make month a factor so it plots in order
 sr$Month = factor(sr$Month, levels = month.name)
 
-
 sr  %>%  
   ggplot()+
   geom_tile(mapping = aes(x,y, fill = val/max(val, na.rm = T)))+
