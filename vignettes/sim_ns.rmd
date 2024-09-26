@@ -268,8 +268,8 @@ par(mar  =  c(2,2,2,4))
 sstr  =  flip(raster(xmn  =  min(woasst$lon), xmx  =  max(woasst$lon), ymn  =  min(woasst$lat), ymx  =  max(woasst$lat), resolution  =  c(diff(woasst$lon)[1], diff(woasst$lat)[1]), vals  =  t(apply(woasst$sst, 1:2, mean, na.rm  =  T))), 'y')
 
 
-sstr |> 
-  ras2df() |> 
+sstr  %>%  
+  ras2df()  %>%  
   ggplot()+
   geom_tile(mapping = aes(x,y, fill = val))+
   scale_fill_gradientn(colors = tim.colors(256), na.value = NA)+
@@ -452,7 +452,7 @@ sstmat$data  =  sstdata2
 
 
 
-sstdata2 = sstdata2 |> apply(3, FUN = function(x) {raster(x) |> t() |> flip()}) |> stack()
+sstdata2 = sstdata2  %>%  apply(3, FUN = function(x) {raster(x)  %>%  t()  %>%  flip(direction = 2)})  %>%  stack()
 
 extent(sstdata2) = c(min(sstmat$lon), max(sstmat$lon), min(sstmat$lat), max(sstmat$lat))
 
@@ -726,8 +726,8 @@ print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'
 stime  =  Sys.time()
 simdat  =  list()
 
-ncores  =  detectCores()-10
-cl  =  makeCluster(ncores, type = 'FORK') # if on Linux, use the FORK!
+ncores  =  detectCores()/2
+cl  =  makeCluster(ncores, type = 'SOCK') # if on Linux, use the FORK!
 registerDoParallel(cl, cores  =  ncores)
 
 for(i in 1:12){
@@ -862,20 +862,19 @@ sr = lapply(sr, ras2df)
 names(sr) = seasons
 
 for(i in 1:4){
-  sr[[i]]$season = seasons[i]
+  sr[[i]]$season = factor(seasons[i])
 }
 
 sr = do.call(rbind, sr)
 
-
-sr |> 
+sr  %>%  
   ggplot()+
   geom_tile(mapping = aes(x,y, fill = val/max(val, na.rm = T)))+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  # geom_sf(box11 |> st_as_sf(), mapping = aes())+
+  # geom_sf(box11  %>%  st_as_sf(), mapping = aes())+
   scale_fill_gradientn(colors = mycol(256), na.value = NA)+
   facet_wrap(~season)+
-  geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
+  # geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
   geom_sf(box11 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
     # geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(coordinates(box11)[,1],4), rep(coordinates(box11)[,2],4)), cex = 8, label =  rep(box11@data$ID, 4), col = 'darkred')+
    geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(lpts[,1],4), rep(lpts[,2],4)), cex = 8, label =  rep(box11@data$ID, 4), col = 'darkred')+
@@ -918,7 +917,7 @@ boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(11, 11,4), perc  =
 
 names(boxtrans)  =  seasons
 
-plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12)
+plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12, text.col = 'black', palette = 'Greens')
 ```
 
 ```{r get_transmat_total, eval  =  T, caption  =  'Transitions expressed as a total'}
@@ -929,7 +928,7 @@ boxtrans  =  get.trans.prob(datbox, nyears = 100, adims  =  c(11,11,4), perc  = 
 
 names(boxtrans)  =  seasons
 
-plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12)
+plot.boxtrans(boxtrans, text.size = 2.5, strip.text = 12, axis.text = 12, text.col = 'black', palette = 'Greens')
 ```
 
 ## Plot simulation results by starting month
@@ -983,11 +982,11 @@ sr = do.call(rbind, sr)
 sr$Month = factor(sr$Month, levels = month.name)
 
 
-sr |> 
+sr  %>%  
   ggplot()+
   geom_tile(mapping = aes(x,y, fill = val/max(val, na.rm = T)))+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  # geom_sf(box11 |> st_as_sf(), mapping = aes())+
+  # geom_sf(box11  %>%  st_as_sf(), mapping = aes())+
   scale_fill_gradientn(colors = mycol(256), na.value = NA)+
   facet_wrap(~Month)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
@@ -1024,7 +1023,7 @@ sr |>
 
 ```{r plot_seas_change, eval  =  F, fig.cap  =  'Seasonal shifts (transitions) expressed spatially. 7-box model used to illustrate how spatial results may differ from results expressed according to stratification.'}
 sr  =  dlply(simdatdf, 'seas', function(x) make.sim.raster(x, boxsize  =  150))
-plot.seas.change(sr, col  =  (fields::tim.colors(256)), mar  =  c(2,2,2,4), box  =  box7)
+plot.seas.change(sr, col  =  (fields::tim.colors(256)), mar  =  c(2,2,2,4), box  =  box11)
 ```
 
 <!-- ## Compare monthly changes, spatially -->
