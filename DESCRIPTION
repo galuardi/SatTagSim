@@ -25,7 +25,8 @@ Depends:
     reshape2,
     rworldmap,
     abind,
-    magic
+    magic,
+    sf
 Suggests:
     analyzepsat,
     rgdal,
