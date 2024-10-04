@@ -1,5 +1,5 @@
 ---
-title: "SatTagSim"
+title: "SatTagSim Homepage"
 author: "Benjamin Galuardi"
 output: github_document
 bibliography: references.bib
@@ -12,6 +12,14 @@ knitr::opts_chunk$set(echo = F)
 ## SatTagSim
 
 `SatTagSim` is a package for R statistical software designed to produce spatial and temporally explicit simulations and movement summaries of fish based on electronic tagging results. The movement simulation is based on an advection diffusion framework and includes environmental constraints which may be tailored to those of the study organism. The primary product of the package are sets of movement matrices that summarize population level movement between discrete areas of the ocean. These matrices are designed to be used in a variety of spatially explicit operational and stock assessment models and management strategy evaluations.
+
+## Installation
+```{r install}
+library(devtools)
+install_github('galuardi/SatTagSim', subdir = 'develop2024')
+
+```
+
 
 ## Tag Data
 
