@@ -1,8 +1,8 @@
 Package: SatTagSim
 Type: Package
 Title: Simulation from Electronic Tags
-Version: 0.1.3
-Date: 2024-08-04
+Version: 1.0.0
+Date: 2024-10-04
 Author: Benjamin Galuardi
 Maintainer: <drdrumfish@gmail.com>
 Description: Simulation from Kalman filtered electronic tag results to produce
