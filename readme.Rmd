@@ -53,13 +53,24 @@ mutate(seas = case_when(Month %in% c(1,2,3) ~ 'Winter'
 )) %>% 
 mutate(Month = as.factor(Month), seas = as.factor(seas))
 
+
+lpts  =  coordinates(box11)
+lpts[4,2]  =  35
+lpts[9,]  =  c(-25, 25)
+
 nsfish %>% 
   st_set_crs(4326) %>% 
 ggplot()+
   geom_sf(aes(col = Month))+
   scale_color_manual(values = cols, aesthetics = c("colour", "fill"), na.value = NA)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
-  coord_sf(xlim = c(-100, -15), ylim = c(10, 50), crs = NULL, datum = sf::st_crs(4326) )+
+    geom_sf(box11 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
+    # geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(coordinates(box11)[,1],4), rep(coordinates(box11)[,2],4)), cex = 8, label =  rep(box11@data$ID, 4), col = 'darkred')+
+   geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(lpts[,1],1), rep(lpts[,2],1)), cex = 8, label =  rep(box11@data$ID, 1), col = 'darkred')+
+    coord_sf(xlim = c(-100, 40), ylim = c(0, 70), crs = NULL, datum = sf::st_crs(4326)) +
+  xlab('')+
+  ylab('')+
+  theme(strip.text.x = element_text(size = 12), strip.text.y = element_text(size = 12))+
   theme_bw()
 ```
 
@@ -89,7 +100,15 @@ ggplot()+
   scale_color_manual(values = cols, aesthetics = c("colour", "fill"), na.value = NA)+
   geom_sf(myworld, mapping = aes(), fill = 'grey90', col = 'grey50')+
   coord_sf(xlim = c(-100, -15), ylim = c(10, 50), crs = NULL, datum = sf::st_crs(4326) )+
+      geom_sf(box11 %>%  sf::st_as_sf(), mapping = aes(), col = 'salmon', lwd = 1, fill = 'transparent')+
+    # geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(coordinates(box11)[,1],4), rep(coordinates(box11)[,2],4)), cex = 8, label =  rep(box11@data$ID, 4), col = 'darkred')+
+   geom_text(data = box11@data, inherit.aes = F, mapping = aes(rep(lpts[,1],1), rep(lpts[,2],1)), cex = 8, label =  rep(box11@data$ID, 1), col = 'darkred')+
+    coord_sf(xlim = c(-100, -45), ylim = c(20, 50), crs = NULL, datum = sf::st_crs(4326)) +
+  xlab('')+
+  ylab('')+
+  theme(strip.text.x = element_text(size = 12), strip.text.y = element_text(size = 12))+
   theme_bw()
+  
 ```
 
 
