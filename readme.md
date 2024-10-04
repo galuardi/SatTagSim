@@ -1,4 +1,4 @@
-SatTagSim
+SatTagSim Homepage
 ================
 Benjamin Galuardi
 
@@ -16,32 +16,6 @@ explicit operational and stock assessment models and management strategy
 evaluations.
 
 ## Installation
-```
-install.packages('devtools')
-devtools::install_github("galuardi/SatTagSim")
-```
-I like to ignore dependencies but this package requires a good amount so perhap don't! Here they are to save you a click or two.. 
-
-```
-Depends:
-    MASS,
-    fields,
-    dplyr,
-    plyr, # future versions should get rid of this one
-    raster, # still here for now.. I know the world has moved on to terra
-    truncnorm,
-    date,
-    parallel,
-    doParallel,
-    foreach,
-    matlab,
-    Gmisc,
-    ggplot2, # I will probably drop this and others in favor of simply using 'tidyverse'
-    reshape2, # future versions should get rid of this one
-    rworldmap,
-    abind,
-    magic
-```
 
 ## Tag Data
 
