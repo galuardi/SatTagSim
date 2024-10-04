@@ -11,7 +11,7 @@
 #' @seealso \code{\link{get.trans.prob}} \code{\link{box7}}
 #' @examples
 #' see vignette
-get.first.box <- function(simdat, syear=2000, boxes=box7, seas.len = 90, nyears = 2){
+get.first.box <- function(simdat, syear = 2000, boxes = box7, seas.len = 90, nyears = 2){
 
   n = nrow(simdat[[1]])
 
@@ -35,7 +35,7 @@ get.first.box <- function(simdat, syear=2000, boxes=box7, seas.len = 90, nyears 
     c(0,diff(x$cbox))
   }
 
-  flbox = ddply(datbox1, 'TagID', function(x) data.frame(x, btrans=get.btrans(x)))
+  flbox = ddply(datbox1, 'TagID', function(x) data.frame(x, btrans = get.btrans(x)))
 
   flbox$pbox = flbox$cbox-flbox$btrans
 

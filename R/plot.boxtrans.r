@@ -14,6 +14,8 @@
 plot.boxtrans <- function(boxtrans, palette = "BrBG", text.col = 'white', text.size = 6, strip.text = 15, axis.text = 20){
   bb = melt(boxtrans)
   bb$L1 = as.factor(bb$L1)
+  bb$Var1 = as.factor(bb$Var1)
+  bb$Var2 = as.factor(bb$Var2)
 levels(bb$L1) = c('Winter','Spring','Summer','Fall')
 lab.dim = dim(boxtrans[[1]])[1]
 ggplot(bb, aes(x=Var2, y = Var1, fill = value))+
@@ -32,7 +34,8 @@ ggplot(bb, aes(x=Var2, y = Var1, fill = value))+
   #       panel.background = element_rect(fill = "white"))
     theme(strip.text = element_text(size = strip.text)
           ,  axis.title.x = element_text(size = axis.text)
-          ,  axis.title.y = element_text(size = axis.text))
+          ,  axis.title.y = element_text(size = axis.text)
+          , legend.title = element_blank())
 }
 
 # bb11 = melt(boxtrans11)
