@@ -15,6 +15,13 @@ These matrices are designed to be used in a variety of spatially
 explicit operational and stock assessment models and management strategy
 evaluations.
 
+## Installation
+```
+install.packages('devtools')
+devtools::install_github("galuardi/SatTagSim")
+```
+I like to ignore dependencies but this package requires a good amount so perhap don't! 
+
 ## Tag Data
 
 Data required for using this package are estimated tracks and associated
