@@ -20,9 +20,9 @@ permissions:
 jobs:
   build:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        r-version: ['4.1.1']
+#    strategy:
+#      matrix:
+#        r-version: ['4.1.1']
 
     steps:
       - uses: actions/checkout@v4
