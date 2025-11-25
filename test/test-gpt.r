@@ -2,18 +2,20 @@
 install_if_missing <- function(pkgs){
   for(p in pkgs) if(!requireNamespace(p, quietly=TRUE)) install.packages(p)
 }
-install_if_missing(c("microbenchmark","foreach","doParallel","geosphere","MASS","SatTagSim"))
+install_if_missing(c("microbenchmark","foreach","doParallel","geosphere","MASS"))
 
 library(microbenchmark)
 library(doParallel)
 library(foreach)
 library(geosphere)
 library(MASS)
+devtools::install()
 library(SatTagSim)
+# 
 
 # --- Replace these with your original and refactored function names ---
-orig_fun <- make.sim.track.par2_original  # define/assign original version in your environment
-refac_fun <- make.sim.track.par2         # refactored version from previous message
+orig_fun <- make.sim.track.par2  # define/assign original version in your environment
+refac_fun <- make.sim.track.par3         # refactored version from previous message
 
 # --- Create realistic synthetic data ---
 set.seed(42)
@@ -49,7 +51,7 @@ sample_idx <- sample(ocean_idx, 100)
 spts <- lapply(sample_idx, function(i) as.numeric(coords[i, ]))
 
 # small simorder and seaslen for quicker runs — adjust for longer realism
-simorder <- sample(1:12, 6)   # six-month track
+simorder <- 1:12   # six-month track
 seaslen <- 30                 # days per month
 
 # helper to ensure the original refactor functions are in scope:
@@ -63,21 +65,30 @@ registerDoParallel(cores = parallel::detectCores(logical = FALSE))
 cat("Warm-up runs...\n")
 invisible(refac_fun(par_array = par_array, simorder = simorder, sp = spts,
                      bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                     seaslen = seaslen, sstol = 2, mcoptions = list()))
+                     seaslen = seaslen, sstol = 2
+                    #  , mcoptions = list()
+                     ))
 
 invisible(orig_fun(par_array = par_array, simorder = simorder, sp = spts,
                    bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                   seaslen = seaslen, sstol = 2, mcoptions = list()))
+                   seaslen = seaslen, sstol = 2
+                  #  , mcoptions = list()
+                   )
+                   )
 
 # Microbenchmark (may be slow if each call is heavy). We time a single outer call (full simulation)
 cat("Running microbenchmark (this will take time)...\n")
 mb <- microbenchmark(
   original = orig_fun(par_array = par_array, simorder = simorder, sp = spts,
                       bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                      seaslen = seaslen, sstol = 2, mcoptions = list()),
+                      seaslen = seaslen, sstol = 2
+                      # , mcoptions = list()
+                      ),
   refactored = refac_fun(par_array = par_array, simorder = simorder, sp = spts,
                          bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                         seaslen = seaslen, sstol = 2, mcoptions = list()),
+                         seaslen = seaslen, sstol = 2
+                        #  , mcoptions = list()
+                        ),
   times = n_rep, unit = "s"
 )
 

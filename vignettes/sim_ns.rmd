@@ -589,7 +589,15 @@ simpar  =  merge.par(par.ns, d.ns, return.mean  =  T)
 
 ```{r get_params_v2, echo  =  T, eval  =  T}
 
-simpar  =  make.par.array(tracks  =  nsfish, inbox  =  box11, rasbox  =  NULL, rrows  =  26*5, rcols  =  29*5, use_wts  =  NULL, missvec  =  c(3,7,10,11), fillvec  =  c(4, 8, 9, 9))
+simpar  =  make.par.array(tracks  =  nsfish
+, inbox  =  box11
+, rasbox  =  NULL
+, rrows  =  26*5
+, rcols  =  29*5
+, use_wts  =  NULL
+, missvec  =  c(3,7,10,11)
+, fillvec  =  c(4, 8, 9, 9)
+)
  
 # par.ns  =  get.allpar(as.data.frame(nsfish))
 # d.ns  =  get.kfD(as.data.frame(nsfish))

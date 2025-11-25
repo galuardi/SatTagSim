@@ -2,7 +2,7 @@ make.sim.track.par3 <- function(par_array, simorder, sp, bath = NULL,
                                 sstmat = NULL, boxmat, seaslen = 30,
                                 sstol = 2, mcoptions = setup.parallel(), ...)
 {
-  require(SatTagSim)
+  # require(SatTagSim)
   if(!requireNamespace("geosphere", quietly = TRUE)) {
     use_geosphere <- FALSE
   } else use_geosphere <- TRUE
@@ -163,14 +163,17 @@ make.sim.track.par3 <- function(par_array, simorder, sp, bath = NULL,
         t1 <- as.numeric(t1)
 
         # SST checks
-        if(!is.null(sstmat)) {
-          ii <- 1
-          if(get.sst.mask.val <- function(lon, lat, mask, month) {
+get.sst.mask.val <- function(lon, lat, mask, month) {
                # local simple index lookup using sstmat lon/lat vectors
                xi <- which.min((lon - sst_lon)^2)
                yi <- which.min((lat - sst_lat)^2)
                mask$data[xi, yi, month]
-             }; get.sst.mask.val(t1[1], t1[2], sstmat, seas) < sstol) {
+             } 
+
+        if(!is.null(sstmat)) {
+          ii <- 1
+          if(
+             get.sst.mask.val(t1[1], t1[2], sstmat, seas) < sstol) {
             # reverse advective attempt
             t1 <- SatTagSim::simm.kf(2, u = c(-uvec[1], uvec[2]), v = c(-vvec[1], vvec[2]),
                                      D = c(Dvec[1], 1000), msp, ulim, vlim, Dlim)[2, ]
