@@ -95,6 +95,86 @@ mb <- microbenchmark(
 print(mb)
 summary(mb)
 
+
+# original 
+
+print(paste0('simulating ', length(spts)*msims, ' tracks for ', nyears, ' years'))
+stime  =  Sys.time()
+simdat  =  list()
+
+ncores  =  detectCores()/2
+cl  =  makeCluster(ncores, type = 'SOCK') # if on Linux, use the FORK!
+
+mcoptions  =  setup.parallel()
+
+# registerDoParallel(cl, cores  =  ncores)
+
+mb1 = microbenchmark(
+for(i in 1:12){
+  subsp  =  spts[[i]][sample(1:nrow(spts[[i]]), msims, replace  =  T),]
+  subsp$row  =  1:nrow(subsp)
+  sp  =  dlply(subsp, 'row', function(x) x[,1:2])
+  simorder  =  as.numeric(morder[i,])
+  
+  print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
+  
+  # test  =  make.sim.track.par(tpar  =  simpar, morder  =  rep(simorder, nyears), sp  =  sp, bath  =  bath, sstmat  =  sstmat, seaslen  =  npmon, sstol  =  sstol, mcoptions  =  mcoptions)
+    test  =  make.sim.track.par2(par_array  =  simpar
+                                 , boxmat  =  boxmat
+                                 , simorder  =  rep(simorder, nyears)
+                                 , sp  =  sp
+                                 , bath  =  NULL
+                                 , sstmat  =  sstmat
+                                 , seaslen  =  npmon
+                                 , sstol  =  sstol
+                                 , mcoptions  =  mcoptions)
+  simdat[[i]]  =  test
+  runtime  =  Sys.time()-stime
+  print(paste0('elapsed time: ', runtime))
+}
+, times = 1
+)
+
+stopCluster(cl)
+rm(test, sp, subsp)
+
+simdat  =  unlist(simdat, recursive  =  F)
+
+# gpt version 
+
+mb2 = microbenchmark(
+for(i in 1:12){
+  subsp  =  spts[[i]][sample(1:nrow(spts[[i]]), msims, replace  =  T),]
+  subsp$row  =  1:nrow(subsp)
+  sp  =  dlply(subsp, 'row', function(x) x[,1:2])
+  simorder  =  as.numeric(morder[i,])
+  
+  print(paste0('simulating ', length(sp), ' tracks starting in ', month.name[i]))
+  
+  # test  =  make.sim.track.par(tpar  =  simpar, morder  =  rep(simorder, nyears), sp  =  sp, bath  =  bath, sstmat  =  sstmat, seaslen  =  npmon, sstol  =  sstol, mcoptions  =  mcoptions)
+    test  =  make.sim.track.par3(par_array  =  simpar
+                                 , boxmat  =  boxmat
+                                 , simorder  =  rep(simorder, nyears)
+                                 , sp  =  sp
+                                 , bath  =  NULL
+                                 , sstmat  =  sstmat
+                                 , seaslen  =  npmon
+                                 , sstol  =  sstol
+                                 , mcoptions  =  mcoptions)
+  simdat[[i]]  =  test
+  runtime  =  Sys.time()-stime
+  print(paste0('elapsed time: ', runtime))
+}
+, times = 1
+)
+
+stopCluster(cl)
+rm(test, sp, subsp)
+
+simdat  =  unlist(simdat, recursive  =  F)
+
+
+
 # Also capture system.time and memory for one run each
 cat("\nSystem time original:\n")
 t_orig <- system.time(oout <- orig_fun(par_array = par_array, simorder = simorder, sp = spts,
