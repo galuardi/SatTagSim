@@ -59,29 +59,44 @@ if(!exists("find_next_sst_cpp")) {
 }
 
 # Ensure both functions exist
-if(!exists("make.sim.track.par2")) stop("R-only function make.sim.track.par2 not found.")
-if(!exists("make.sim.track.par2_rcpp")) stop("Rcpp-patched function make.sim.track.par2_rcpp not found.")
+# if(!exists("make.sim.track.par2")) stop("R-only function make.sim.track.par2 not found.")
+# if(!exists("make.sim.track.par2_rcpp")) stop("Rcpp-patched function make.sim.track.par2_rcpp not found.")
 
 # Small wrapper to standardize mcoptions for local single-threaded runs
 mcoptions_local <- list()  # depends on your setup; empty works for sequential backend
 
 # Warm-up both functions once
 cat("Warm-up runs...\n")
+
+registerDoParallel(cores = parallel::detectCores(logical = FALSE))
+
 invisible(make.sim.track.par2(par_array = par_array, simorder = simorder, sp = spts,
                               bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                              seaslen = seaslen, sstol = 2, mcoptions = mcoptions_local))
+                              seaslen = seaslen, sstol = 2
+                              # , mcoptions = mcoptions_local)
+                            )
+                          )
 invisible(make.sim.track.par2_rcpp(par_array = par_array, simorder = simorder, sp = spts,
                                    bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                                   seaslen = seaslen, sstol = 2, mcoptions = mcoptions_local))
+                                   seaslen = seaslen, sstol = 2
+                                  #  , mcoptions = mcoptions_local)
+                                  )
+                                )
 
 # Single-run timing (system.time)
 cat("Timing single run (system.time)...\n")
 t_r <- system.time(out_r <- make.sim.track.par2(par_array = par_array, simorder = simorder, sp = spts,
                                                  bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                                                 seaslen = seaslen, sstol = 2, mcoptions = mcoptions_local))
+                                                 seaslen = seaslen, sstol = 2
+                                                #  , mcoptions = mcoptions_local)
+                                                )
+                                              )
 t_rcpp <- system.time(out_rcpp <- make.sim.track.par2_rcpp(par_array = par_array, simorder = simorder, sp = spts,
                                                            bath = bath_grid, sstmat = sstmat, boxmat = boxmat,
-                                                           seaslen = seaslen, sstol = 2, mcoptions = mcoptions_local))
+                                                           seaslen = seaslen, sstol = 2
+                                                          #  , mcoptions = mcoptions_local)
+                                                          )
+                                                        )
 print(list(R_only = t_r, Rcpp_patched = t_rcpp))
 
 # Microbenchmark (3 repeats)
