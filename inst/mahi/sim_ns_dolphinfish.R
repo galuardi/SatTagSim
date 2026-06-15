@@ -15,7 +15,10 @@ knitr::opts_chunk$set(echo  =  FALSE, warning  =  FALSE,
 
 
 ## ----setup_data, eval  =  T--------------------------------------------------------------------------------------------------------------------------------------
-library(SatTagSim)
+setwd('C:/Users/benjamin.galuardi/Documents/MYPROJECTS/MAHI-TMP/')
+
+library(SatTagSim) # use this is already installed
+devtools::load_all('C:/Users/benjamin.galuardi/Documents/GitHub/SatTagSim/') # use this when testing
 library(rworldmap)
 library(rworldxtra)
 library(tidyverse)
@@ -23,7 +26,7 @@ library(raster)
 library(sf)
 data(myramps, package = 'SatTagSim')
 data(woasst)
-load('C:/Users/benjamin.galuardi/Documents/GitHub/SatTagSim/data/myramps.rda')
+# load('C:/Users/benjamin.galuardi/Documents/GitHub/SatTagSim/data/myramps.rda') # use this approach if the ramps dont load
 
 
 ## ----make rmask, eval = T----------------------------------------------------------------------------------------------------------------------------------------
@@ -52,6 +55,7 @@ my_rmask_raster <- my_rmask
 
 
 ## ----setup_boxes, eval= T----------------------------------------------------------------------------------------------------------------------------------------
+
 my_boxes <- read_sf("dolphinfish_boxes.shp") |> 
     mutate(`ID` = `Id`) |> 
   sf::as_Spatial() 
@@ -345,7 +349,8 @@ simpar  =  make.par.array(tracks  =  dlfish_sp
 )
  
 
-# make plots of the simpar tables 
+# make plots of the simpar tables ----
+# skip if you don't need these outputs 
 
 # iwalk loops through the list of 2D matrices and provides the index (.y)
 iwalk(asplit(round(simpar, 3), 3), ~ {
@@ -526,7 +531,7 @@ sr  %>%
 # try new version of function... it works!!
 # datbox  =  get.first.box(simdat, 2000, my_boxes, seas.len  =  npmon*3) # season length is number per month*3
 
-source('get_first_box_mod.R')
+# source('get_first_box_mod.R')
 
 datbox  =  get_first_box_mod(simdat, 2000, my_boxes, seas.len  =  npmon*3) # season length is number per month*3
 
