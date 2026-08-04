@@ -33,9 +33,6 @@ make.par.array(
 
 \item{fillvec}{vector of replacement rows for missvec. This is a subjectie decision by the user and is dependent on the spatial strata used}
 }
-\value{
-
-}
 \description{
 Make spatio-temporal array of movement parameters
 This function generates monthly advection and diffusion mean and standard deviation for each area in the spatial strata used. Missing months default to the previous months value. Missing areas should be filled in by the user.
