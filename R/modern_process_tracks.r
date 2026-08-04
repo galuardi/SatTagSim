@@ -1,3 +1,28 @@
+#' Get parameters modern method
+#' alternate way of getting movement parameters 
+#' Experimental only.. 
+#' @param tracks
+#' @param inbox
+#' @param rasbox
+#' @param rrows
+#' @param rcols
+#' @param use_wts
+#' @param missvec
+#' @param fillvec
+#'
+#' @returns
+#'
+#' @export
+#' @examples
+#' simpar_dl_test  =  modern_process_tracks(tracks  =  dlfish_sp
+#', inbox  =  my_boxes
+#', rasbox  =  NULL
+#', rrows  =  26*5
+#', rcols  =  29*5
+#', missvec  =  c(1)
+#', fillvec  =  c(2)
+#', use_wts  =  NULL
+#')
 modern_process_tracks <- function(tracks, inbox, rasbox = NULL, 
                                   rrows = 26 * 5, rcols = 29 * 5, 
                                   use_wts = NULL, missvec = NULL, fillvec = NULL) {
@@ -180,14 +205,6 @@ final_data <- full_grid %>%
 
 # simpar_dl  =  make.par.array(tracks  =  dlfish_sp, inbox  =  my_boxes, rasbox  =  NULL, rrows  =  26*5, rcols  =  29*5, use_wts  =  NULL)
 
-simpar_dl_test  =  modern_process_tracks(tracks  =  dlfish_sp
-, inbox  =  my_boxes
-, rasbox  =  NULL
-, rrows  =  26*5
-, rcols  =  29*5
-, missvec  =  c(1)
-, fillvec  =  c(2)
-, use_wts  =  NULL
-)
+
 
 
