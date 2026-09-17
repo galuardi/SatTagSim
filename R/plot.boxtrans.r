@@ -9,33 +9,35 @@
 #'
 #' @return a four panel, seasonal plot (ggplot)
 #' @export
+#' @rawNamespace export(plot.boxtrans)
 #'
 #' @examples
 plot.boxtrans <- function(boxtrans, palette = "BrBG", text.col = 'white', text.size = 6, strip.text = 15, axis.text = 20){
-  bb = melt(boxtrans)
-  bb$L1 = as.factor(bb$L1)
-  bb$Var1 = as.factor(bb$Var1)
-  bb$Var2 = as.factor(bb$Var2)
-levels(bb$L1) = c('Winter','Spring','Summer','Fall')
-lab.dim = dim(boxtrans[[1]])[1]
-ggplot(bb, aes(x=Var2, y = Var1, fill = value))+
-  geom_tile()+
-  # geom_label(label = round(bb$value,2), colour = 'white', fontface = 'bold')+
-  geom_text(label = round(bb$value,2), col = text.col, fontface = 'bold', size = text.size)+
-  scale_fill_distiller(palette = palette, direction = 1)+
-  facet_wrap(~L1)+
-  xlab('Ending Area')+
-  ylab('Start Area')+
-  # scale_x_continuous(breaks = 1:lab.dim, labels = 1:lab.dim)+
-  # scale_y_continuous(breaks = 1:lab.dim, labels = 1:lab.dim)+
-  # theme(axis.text = element_text(size = 12),
-  #       axis.title=element_text(size=14, face="bold"),
-  #       strip.text = element_text(size = 12),
-  #       panel.background = element_rect(fill = "white"))
-    theme(strip.text = element_text(size = strip.text)
-          ,  axis.title.x = element_text(size = axis.text)
-          ,  axis.title.y = element_text(size = axis.text)
-          , legend.title = element_blank())
+  df_list <- lapply(seq_along(boxtrans), function(i) {
+    df <- as.data.frame(as.table(boxtrans[[i]]))
+    names(df) <- c("Var1", "Var2", "value")
+    df$L1 <- as.character(i)
+    df
+  })
+  bb <- do.call(rbind, df_list)
+  bb$L1 <- factor(bb$L1, levels = as.character(seq_along(boxtrans)))
+  if (length(boxtrans) == 4) {
+    levels(bb$L1) <- c('Winter', 'Spring', 'Summer', 'Fall')
+  }
+  bb$Var1 <- as.factor(bb$Var1)
+  bb$Var2 <- as.factor(bb$Var2)
+
+  ggplot2::ggplot(bb, ggplot2::aes(x = Var2, y = Var1, fill = value)) +
+    ggplot2::geom_tile() +
+    ggplot2::geom_text(ggplot2::aes(label = round(value, 2)), col = text.col, fontface = 'bold', size = text.size) +
+    ggplot2::scale_fill_distiller(palette = palette, direction = 1) +
+    ggplot2::facet_wrap(~L1) +
+    ggplot2::xlab('Ending Area') +
+    ggplot2::ylab('Start Area') +
+    ggplot2::theme(strip.text = ggplot2::element_text(size = strip.text),
+                   axis.title.x = ggplot2::element_text(size = axis.text),
+                   axis.title.y = ggplot2::element_text(size = axis.text),
+                   legend.title = ggplot2::element_blank())
 }
 
 # bb11 = melt(boxtrans11)
