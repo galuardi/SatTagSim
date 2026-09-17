@@ -5,6 +5,7 @@
 #'
 #' @return a plot
 #' @export
+#' @rawNamespace export(plot.seas.change)
 #' @examples
 #' # after running make.sim.track.par
 #' simdatdf = ldply(simdat)

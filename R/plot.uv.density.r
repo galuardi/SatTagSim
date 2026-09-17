@@ -10,38 +10,42 @@
 #'
 #' @return a ggplot
 #' @export
+#' @rawNamespace export(plot.uv.density)
 #'
 #' @examples
 #' see vignette
-plot.uv.density <- function(allpar, save=F, fname=NULL, ulims = c(-50,50), vlims = c(-50,50), ...){
-require(ggplot2)
-usd = tapply(allpar$u, allpar$Month, sd, na.rm=T)
-umean = tapply(allpar$u, allpar$Month, mean, na.rm=T)
-vsd = tapply(allpar$v, allpar$Month, sd, na.rm=T)
-vmean = tapply(allpar$v, allpar$Month, mean, na.rm=T)
+plot.uv.density <- function(allpar, save = FALSE, fname = NULL, ulims = c(-50, 50), vlims = c(-50, 50), ...) {
+  usd   <- tapply(allpar$u, allpar$Month, sd, na.rm = TRUE)
+  umean <- tapply(allpar$u, allpar$Month, mean, na.rm = TRUE)
+  vsd   <- tapply(allpar$v, allpar$Month, sd, na.rm = TRUE)
+  vmean <- tapply(allpar$v, allpar$Month, mean, na.rm = TRUE)
 
-# par(mfrow=c(3,4))
-myd=NULL
-allp=NULL
-ii = 1
-for(i in 1:4) {
-	for(j in 1:3){
-# x11()
-	u <- rtruncnorm(1000, a=-50, b= 50, umean[ii], usd[ii])
-	v <-   rtruncnorm(1000, a=-50, b= 50, vmean[ii], vsd[ii])
-	myd <- rbind(myd, cbind(u, v, rowid=rep(i,1000), colid = rep(j, 1000),month = rep(ii, 1000)))
-	# myd = data.frame(xvar, yvar)
-	ii = ii+1
-	temp = data.frame(u, v)
-	allp[[ii]]= ggplot(temp, aes(x=u, y=v)) + stat_density2d(aes(fill = ..level..), geom="polygon", colour='white')+coord_cartesian(ulims, vlims)+scale_fill_gradient(low="lightblue", high="grey50")+geom_hline(yintercept=0, lty=2,col=2)+geom_vline(xintercept=0,lty=2,col=2)
-	}
-}
+  # Generate simulated values per month (1 to 12)
+  sim_list <- lapply(seq_len(12), function(m) {
+    u_m <- if (is.finite(umean[as.character(m)]) && is.finite(usd[as.character(m)])) {
+      truncnorm::rtruncnorm(1000, a = -50, b = 50, umean[as.character(m)], usd[as.character(m)])
+    } else {
+      rep(NA_real_, 1000)
+    }
+    v_m <- if (is.finite(vmean[as.character(m)]) && is.finite(vsd[as.character(m)])) {
+      truncnorm::rtruncnorm(1000, a = -50, b = 50, vmean[as.character(m)], vsd[as.character(m)])
+    } else {
+      rep(NA_real_, 1000)
+    }
+    data.frame(u = u_m, v = v_m, month = m)
+  })
 
-myd = as.data.frame(myd)
-myd$labs = factor(myd$month, label=month.name)
- # myd$labs2=factor(myd$month, levels = month.name)
+  myd <- do.call(rbind, sim_list)
+  myd <- myd[!is.na(myd$u) & !is.na(myd$v), ]
+  myd$labs <- factor(myd$month, levels = 1:12, labels = month.name)
 
-p1 = ggplot(myd, aes(x=u, y=v)) + stat_density2d(aes(fill = ..level..), geom="polygon")+coord_cartesian(ulims, vlims)+scale_fill_gradient(low="lightblue", high="salmon")+geom_hline(yintercept=0, lty=2,col=2)+geom_vline(xintercept=0,lty=2,col=2)+facet_wrap(~labs, nrow=3)
+  p1 <- ggplot2::ggplot(myd, ggplot2::aes(x = u, y = v)) +
+    ggplot2::stat_density2d(ggplot2::aes(fill = ggplot2::after_stat(level)), geom = "polygon") +
+    ggplot2::coord_cartesian(xlim = ulims, ylim = vlims) +
+    ggplot2::scale_fill_gradient(low = "lightblue", high = "salmon") +
+    ggplot2::geom_hline(yintercept = 0, lty = 2, col = 2) +
+    ggplot2::geom_vline(xintercept = 0, lty = 2, col = 2) +
+    ggplot2::facet_wrap(~labs, nrow = 3)
 
 
 circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){

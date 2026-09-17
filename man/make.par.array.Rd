@@ -6,8 +6,8 @@
 This function generates monthly advection and diffusion mean and standard deviation for each area in the spatial strata used. Missing months default to the previous months value. Missing areas should be filled in by the user.}
 \usage{
 make.par.array(
-  tracks,
-  inbox,
+  tracks = nsfish,
+  inbox = box7,
   rasbox = NULL,
   rrows = 26 * 5,
   rcols = 29 * 5,

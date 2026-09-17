@@ -16,11 +16,11 @@
 #' @examples
 #' see Vignettes
 #'
-make.sim.raster  <- function(simdat, xmn = -100, xmx = 30, ymn = 0, ymx = 60, boxsize= 60){
-  # require(raster)
-  r = raster(nrow=(ymx-ymn)*60/boxsize, ncol= (xmx-xmn)*60/boxsize, xmn = xmn, xmx = xmx, ymn = ymn, ymx = ymx)
+make.sim.raster  <- function(simdat, xmn = -100, xmx = 30, ymn = 0, ymx = 60, boxsize = 60){
+  r = raster::raster(nrow = (ymx-ymn)*60/boxsize, ncol = (xmx-xmn)*60/boxsize, xmn = xmn, xmx = xmx, ymn = ymn, ymx = ymx)
+  simdat = as.data.frame(simdat)
   simdat$CID = 1
-  coordinates(simdat) = ~lon+lat
-  sr = rasterize(simdat, r, field = 'CID', fun='count') #[[1]]
+  sp::coordinates(simdat) = ~lon+lat
+  sr = raster::rasterize(simdat, r, field = 'CID', fun = 'count')
   return(sr)
 }

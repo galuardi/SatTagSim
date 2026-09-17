@@ -11,22 +11,22 @@
 #'
 #' @examples
 #' see vignette
-get.kfD <- function(tracks = nsfish){
-  nrec.df = ddply(as.data.frame(tracks), .(Month, TagID), function(x) c(mean(x$D, na.rm=T), mean(x$Dsd, na.rm=T), nrow(x)))
-  names(nrec.df)[3:5] = c('D','Dsd','nrec')
-  # nrec.df = ddply(tracks, c('TagID', 'Month'), function(x) nrow(x))
-  # names(nrec.df)[3] = 'nrec'
+get.kfD <- function(tracks = nsfish) {
+  df <- as.data.frame(tracks)
+  nrec.df <- df |>
+    dplyr::group_by(Month, TagID) |>
+    dplyr::summarise(
+      D = mean(D, na.rm = TRUE),
+      Dsd = mean(Dsd, na.rm = TRUE),
+      nrec = dplyr::n(),
+      .groups = "drop"
+    ) |>
+    as.data.frame()
 
-  # REPLACE UD D WITH KF ESTIMATED D
-  # pidx = match(nrec.df$TagID, tracks$TagID)  # matches parameters from KF to the allpar object
-  # nrec.df$D  = tracks[pidx,'D']
-  # nrec.df$Dsd  = tracks[pidx,'Dsd']
-
-  # substitute NA's with mean value for all fish
-  meanD = mean(nrec.df$D, na.rm=T)
-  nrec.df$D[is.na(nrec.df$D)] = meanD
-  meanDsd = mean(nrec.df$Dsd, na.rm=T)
-  nrec.df$Dsd[is.na(nrec.df$Dsd)] = meanDsd
-  nrec.df$nrec[is.na(nrec.df$nrec)] = 0
+  meanD <- mean(nrec.df$D, na.rm = TRUE)
+  meanDsd <- mean(nrec.df$Dsd, na.rm = TRUE)
+  if (!is.nan(meanD)) nrec.df$D[is.na(nrec.df$D)] <- meanD
+  if (!is.nan(meanDsd)) nrec.df$Dsd[is.na(nrec.df$Dsd)] <- meanDsd
+  nrec.df$nrec[is.na(nrec.df$nrec)] <- 0
   nrec.df
 }

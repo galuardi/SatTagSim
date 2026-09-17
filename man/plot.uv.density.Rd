@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{uv.density}(
   allpar,
-  save = F,
+  save = FALSE,
   fname = NULL,
   ulims = c(-50, 50),
   vlims = c(-50, 50),

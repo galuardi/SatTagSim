@@ -7,8 +7,18 @@
 get_first_box_mod(simdat, syear = 2000, boxes = box7, seas.len = 90)
 }
 \arguments{
-\item{seas.len}{}
+\item{simdat}{list of simulated tracks from \code{\link{make.sim.track.par}}}
+
+\item{syear}{start year; a dummy variable for date determination}
+
+\item{boxes}{spatial polygons strata for transition determination}
+
+\item{seas.len}{length of season. typically 90 days but can be adjusted for monthly or other time intervals}
 }
 \description{
 Get First Box
+}
+\examples{
+Modernized First Box Function (Alias)
+
 }

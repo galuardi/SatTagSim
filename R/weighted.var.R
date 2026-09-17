@@ -1,12 +1,13 @@
-weighted.var <-
-function(x, w, na.rm = FALSE) {
-    if (na.rm) {
-        w <- w[i <- !is.na(x)]
-        x <- x[i]
-    }
-    sum.w <- sum(w)
-    sum.w2 <- sum(w^2)
-    mean.w <- sum(x * w) / sum(w)
-    (sum.w / (sum.w^2 - sum.w2)) * sum(w * (x - mean.w)^2, na.rm =
-na.rm)
+weighted.var <- function(x, w, na.rm = FALSE) {
+  if (na.rm) {
+    keep <- !is.na(x) & !is.na(w)
+    w <- w[keep]
+    x <- x[keep]
+  }
+  sum.w <- sum(w)
+  sum.w2 <- sum(w^2)
+  denom <- sum.w^2 - sum.w2
+  if (is.na(denom) || denom <= 0) return(NA_real_)
+  mean.w <- sum(x * w) / sum.w
+  (sum.w / denom) * sum(w * (x - mean.w)^2)
 }

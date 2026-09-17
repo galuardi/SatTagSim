@@ -144,7 +144,7 @@ make.sim.track.par <- function(tpar = tpar, morder = morder, sp = spts, bath = b
     }
     # }
     tsim = as.data.frame(temp)
-    names(tsim) = c('lon,','lat','Month')
+    names(tsim) = c('lon', 'lat', 'Month')
     tsim
   }
 

@@ -10,35 +10,28 @@
 #'
 #' @examples
 #' none. Typically used within other functions
-get.uv <- function(track = nsfish[1:10,]){
+get.uv <- function(track = nsfish[1:10, ]) {
+  track <- as.data.frame(track)
+  # Keep only complete, finite rows for the required 5 columns
+  valid <- complete.cases(track[, 1:5]) &
+    is.finite(track[, 1]) & is.finite(track[, 2]) & is.finite(track[, 3]) &
+    is.finite(track[, 4]) & is.finite(track[, 5])
+  track <- track[valid, , drop = FALSE]
+  n <- nrow(track)
+  if (n < 2) return(c(u = NA_real_, v = NA_real_))
 
-  # CONVERSION FUNCTIONS TO AND FROM NAUTICAL MILES
-  z <- function(a1, a2) {
-    lon <- -a1/(60 * cos(a2/60 * pi/180)) + lon[1]
-    lat <- a2/60
-    return(cbind(lon, lat))
-  }
-  zi <- function(lon, lat) {
-    a1 <- -(lon - lon[1]) * 60 * cos(lat * pi/180)
-    a2 <- lat * 60
-    return(cbind(a1, a2))
-  }
-
-  track[track == "NaN"] <- NA
-  track[track == "-Inf"] <- NA
-  track[track == "Inf"] <- NA
-  track <- na.omit(track)
   lon <- track[, 4]
   lat <- track[, 5]
-  a1a2 <- zi(lon, lat)
-  a1 <- a1a2[, 1]
-  a2 <- a1a2[, 2]
-  date <- mdy.date(day = track[, 1], month = track[, 2], year = track[,
-                                                                      3])
-  dayAL <- date - date[1]
-  n <- nrow(track)
-  u <- (a1[n] - a1[1])/dayAL[n]
-  v <- (a2[n] - a2[1])/dayAL[n]
-  c(u,v)
 
+  # Conversion to nautical miles
+  a1_n <- -(lon[n] - lon[1]) * 60 * cos(lat[n] * pi / 180)
+  a2_diff <- (lat[n] - lat[1]) * 60
+
+  dates <- as.Date(paste(track[, 3], track[, 2], track[, 1], sep = "-"))
+  dayAL_n <- as.numeric(dates[n] - dates[1])
+  if (is.na(dayAL_n) || dayAL_n == 0) return(c(u = NA_real_, v = NA_real_))
+
+  u <- a1_n / dayAL_n
+  v <- a2_diff / dayAL_n
+  c(u = unname(u), v = unname(v))
 }

@@ -6,9 +6,6 @@
 \usage{
 make.seas.idx(btracks)
 }
-\arguments{
-\item{btracks}{}
-}
 \value{
 a list of logical indices by season
 }

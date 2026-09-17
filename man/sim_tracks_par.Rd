@@ -17,9 +17,6 @@ sim_tracks_par(
   ...
 )
 }
-\arguments{
-\item{...}{}
-}
 \description{
 Simulate tracks in parallel
 }

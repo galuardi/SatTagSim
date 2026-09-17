@@ -5,7 +5,7 @@
 \title{Merge u,v,D parameters
 Function to merge UV and D parameter data frames together}
 \usage{
-\method{merge}{par}(uvpar, Dpar, track = NULL, return.mean = F)
+\method{merge}{par}(uvpar, Dpar, track = NULL, return.mean = FALSE)
 }
 \arguments{
 \item{uvpar}{dataframe of u and v advection parameters from \code{\link{get.allpar}}}

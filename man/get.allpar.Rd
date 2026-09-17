@@ -4,7 +4,7 @@
 \alias{get.allpar}
 \title{Get u and v parameterss}
 \usage{
-get.allpar(tracks = nsfish, parallel = F)
+get.allpar(tracks = nsfish, parallel = FALSE)
 }
 \arguments{
 \item{tracks}{A group of tracks returned from Kalman filter estimation. Columns must be in the following order: Day, Month, Year, Longitude, Latitude}

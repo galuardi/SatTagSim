@@ -20,7 +20,14 @@ export(make.seas.idx)
 export(make.sim.raster)
 export(make.sim.track.par)
 export(make.sim.track.par2)
+export(merge.par)
+
 export(modern_process_tracks)
+export(plot.boxtrans)
+
+export(plot.seas.change)
+export(plot.uv.density)
+
 export(rmask2array)
 export(setup.parallel)
 export(sim_tracks_par)

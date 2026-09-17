@@ -24,9 +24,14 @@ get.start.pts <- function(dat, n = 100, months = 1:12, mask = rmask, posnames = 
 					  tmpr = raster::resample(tmpr, mask)*mask[[i]]
 					  tmpr[tmpr<0] = 0
 					  tmpdf = as.data.frame(as(tmpr, 'SpatialPointsDataFrame'))
-					  tmpdf[,1] = tmpdf[,1]/max(tmpdf[,1])
-					  pts = tmpdf[sample(1:nrow(tmpdf), n, prob = tmpdf[,1], replace = T),2:3] # note: the sampl
-					  # spts[[i]] = pts
+					  if (nrow(tmpdf) == 0) {
+					    pts = tmp[sample(seq_len(nrow(tmp)), n, replace = TRUE), c('lon', 'lat')]
+					    names(pts) = c('x', 'y')
+					  } else {
+					    pts = tmpdf[sample(seq_len(nrow(tmpdf)), n, prob = tmpdf[,1], replace = TRUE), 2:3]
+					  }
+					  names(pts) = c('x', 'y')
+					  pts
 				  }
 				)
 		names(spts) = months

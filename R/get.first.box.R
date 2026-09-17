@@ -11,35 +11,41 @@
 #' @seealso \code{\link{get.trans.prob}} \code{\link{box7}}
 #' @examples
 #' see vignette
-get.first.box <- function(simdat, syear = 2000, boxes = box7, seas.len = 90, nyears = 2){
+get.first.box <- function(simdat, syear = 2000, boxes = box7, seas.len = 90, nyears = 2) {
+  names(simdat) <- seq_along(simdat)
 
-  n = nrow(simdat[[1]])
+  sim_clean <- lapply(simdat, function(df) {
+    df <- as.data.frame(df)
+    if (ncol(df) >= 3) names(df)[1:3] <- c("lon", "lat", "Month")
+    df
+  })
 
-  names(simdat) = 1:length(simdat)
-  simdatsub = ldply(simdat, function(x) x[seq(1, n, by = seas.len),])[,2:4] # 90 days in a season
-  datbox1 = get.box.vals(simdatsub, boxes = boxes)
+  datbox <- dplyr::bind_rows(sim_clean, .id = "TagID") |>
+    dplyr::mutate(TagID = as.numeric(TagID)) |>
+    dplyr::group_by(TagID) |>
+    dplyr::mutate(
+      Step = dplyr::row_number(),
+      Year = syear + floor((Step - 1) / 360)
+    ) |>
+    dplyr::slice(seq(1, dplyr::n(), by = seas.len)) |>
+    dplyr::ungroup()
 
-  datbox1$TagID = as.vector(apply(data.frame(names(simdat)), 1, rep, n/seas.len)) # 90 days in a season
-  years = syear:((syear+n/360)-1)
-  datbox1$Year = as.vector(apply(data.frame(years), 1, rep, n/seas.len*nyears)) # 180 is the total of 2 seasons for each year
-  datbox1$cbox = datbox1$box
+  spatial_subset <- datbox |>
+    dplyr::select(lon, lat, dplyr::any_of(c("Month", "season")))
 
-  # flbox = ddply(datbox1, c('Year','season', 'TagID'), function(x) c(x$box[1]))
+  box_results <- get.box.vals(as.data.frame(spatial_subset), boxes = boxes)
+  datbox$cbox <- box_results$box
 
-  # names(flbox)[4] = c('cbox')
-  #==================================#
-  # function that calculates movement in terms of changes from the previous area	i.e. box 4-->6 = 2, box 6-->4 = -2
-  #==================================#
-  get.btrans=function(x){
-    nseas = nrow(x)
-    c(0,diff(x$cbox))
-  }
+  flbox <- datbox |>
+    dplyr::group_by(TagID) |>
+    dplyr::mutate(
+      pbox = dplyr::lag(cbox, default = dplyr::first(cbox)),
+      btrans = cbox - pbox
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::rename(season = Month) |>
+    dplyr::select(Year, season, TagID, pbox, btrans, cbox) |>
+    as.data.frame()
 
-  flbox = ddply(datbox1, 'TagID', function(x) data.frame(x, btrans = get.btrans(x)))
-
-  flbox$pbox = flbox$cbox-flbox$btrans
-
-  flbox = flbox[,c('Year','season','TagID','pbox','btrans','cbox')]
-
-    flbox
+  flbox
 }

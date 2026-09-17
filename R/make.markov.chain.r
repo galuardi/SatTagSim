@@ -15,19 +15,28 @@
 #' image.plot(1:200, 1:2,(xx[1:200,1:2]), nlevel = 7, zlim = c(1,7), xlab = 'cycle', ylab = 'chain (fish)', axes = T)
 #' barplot(table(xx[1:200,]))
 
-make.markov.chain <-
-  function(boxtrans = boxtrans, s.init = 3,  sorder = rep(1:4, 1000)) {
-    states = 1:nrow(boxtrans[[1]])
-    # sorder = rep(1:4, 1000) # order of the seasons. 1-4 is winter, spring, summer and fall
-    schain = numeric(length = length(sorder))
-    schain[1] = s.init
-    for (i in 2:length(sorder)) {
-      step = ifelse((i != 4000), 1,-3999)
-      possible.states = states[which(rowSums(boxtrans[[sorder[i + step]]])!=0)]
-      svec = boxtrans[[sorder[i]]][schain[i - abs(step)], possible.states]
-      schain[i] = sample(possible.states, 1, prob = svec)
+make.markov.chain <- function(boxtrans, s.init = 3, sorder = rep(1:4, 1000)) {
+  n_trans <- length(sorder)
+  if (n_trans < 1) return(numeric(0))
+
+  states <- seq_len(nrow(boxtrans[[1]]))
+  schain <- numeric(length = n_trans)
+  schain[1] <- s.init
+
+  for (i in 2:n_trans) {
+    next_idx <- if (i < n_trans) i + 1 else 1
+    possible.states <- states[rowSums(boxtrans[[sorder[next_idx]]]) != 0]
+    if (length(possible.states) == 0) possible.states <- states
+
+    svec <- boxtrans[[sorder[i]]][schain[i - 1], possible.states]
+    prob_sum <- sum(svec)
+    if (is.na(prob_sum) || prob_sum == 0) {
+      schain[i] <- schain[i - 1]
+    } else {
+      schain[i] <- sample(possible.states, 1, prob = svec)
     }
-    schain
   }
+  schain
+}
 
 

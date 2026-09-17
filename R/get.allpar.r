@@ -12,33 +12,39 @@
 #'
 #' @examples
 #'
-get.allpar <- function (tracks = nsfish, parallel = F){
-  # require(plyr)
-  getuvsub = function(temp){
-    xx = temp[, c("Day", "Month", "Year", "Longitude", "Latitude",
-                  "MaxTemp")]
-    xx$MaxTemp = 24
-    tab = table(xx$Month)
-    rem.mon = as.numeric(attributes(tab)$dimnames[[1]])[tab <
-                                                          5]
-    if (length(rem.mon) >= 1) {
-      for (j in 1:length(rem.mon)) {
-        xx = xx[xx$Month != rem.mon[j], ]
-      }
-    }
-    pars = ddply(xx, "Month", function(x) get.uv(x), .parallel=parallel)
+get.allpar <- function(tracks = nsfish, parallel = FALSE) {
+  tracks <- as.data.frame(tracks)
+  tag_list <- split(tracks, tracks$TagID)
+
+  calc_tag <- function(temp) {
+    tab <- table(temp$Month)
+    keep_months <- as.numeric(names(tab)[tab >= 5])
+    temp <- temp[temp$Month %in% keep_months, c("Day", "Month", "Year", "Longitude", "Latitude")]
+    if (nrow(temp) == 0) return(NULL)
+
+    mon_list <- split(temp, temp$Month)
+    res_list <- lapply(names(mon_list), function(m) {
+      uv <- get.uv(mon_list[[m]])
+      data.frame(Month = as.numeric(m), u = unname(uv[1]), v = unname(uv[2]))
+    })
+    do.call(rbind, res_list)
   }
-  allpar = NULL
-  # pb <- txtProgressBar(style = 3, ...)
-  # tl = length(tnames)
-  # ii = 1/tl
-  # Sys.sleep(.5)
-  allpar = ldply(dlply(tracks, 'TagID', function(x) getuvsub(x), .parallel=parallel)	)
-  # Sys.sleep(1)
-  # close(pb)
-  names(allpar)[2:4] = c('Month',"u", "v")
-  allpar = allpar[,1:4]
-  allpar$D = 500 # default value.. will be substituted later
-  allpar$nrec = 0 # default value.. will be substituted later
+
+  all_list <- lapply(names(tag_list), function(tid) {
+    res <- calc_tag(tag_list[[tid]])
+    if (!is.null(res) && nrow(res) > 0) {
+      data.frame(TagID = tid, res, stringsAsFactors = FALSE)
+    } else {
+      NULL
+    }
+  })
+
+  allpar <- do.call(rbind, all_list)
+  if (is.null(allpar) || nrow(allpar) == 0) {
+    return(data.frame(TagID = character(0), Month = numeric(0), u = numeric(0), v = numeric(0), D = numeric(0), nrec = numeric(0)))
+  }
+  allpar$D <- 500
+  allpar$nrec <- 0
+  rownames(allpar) <- NULL
   allpar
 }

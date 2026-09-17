@@ -10,6 +10,7 @@
 #' @seealso \code{\link{get.kfD}} \code{\link{get.uv}} \code{\link{get.allpar}}
 #' @author Benjamin Galuardi
 #' @export
+#' @rawNamespace export(merge.par)
 #'
 #' @examples
 #' data("nsfish")
@@ -17,106 +18,60 @@
 #' Dpar = get.kfD(as.data.frame(nsfish))
 #' simpar = merge.par(uvpar, Dpar, return.mean=T)
 #'
-merge.par <- function (uvpar, Dpar, track = NULL, return.mean = F)
-{
-  for (i in 1:12) {
-    for (j in unique(uvpar$TagID)) {
-      idx1 = which(uvpar$Month == i & uvpar$TagID == j)
-      idx2 = which(Dpar$Month == i & Dpar$TagID == j)
-      if (length(idx1) > 0 & length(idx2) > 0) {
-        uvpar$D[idx1] = Dpar$D[idx2]
-        uvpar$nrec[idx1] = Dpar$nrec[idx2]
-      }
-    }
+merge.par <- function(uvpar, Dpar, track = NULL, return.mean = FALSE) {
+  uvpar <- as.data.frame(uvpar)
+  Dpar <- as.data.frame(Dpar)
+
+  # Fast vectorized match by TagID and Month
+  tag_col_uv <- intersect(c("TagID", "tagid"), names(uvpar))[1]
+  tag_col_d  <- intersect(c("TagID", "tagid"), names(Dpar))[1]
+
+  key_uv <- paste(uvpar[[tag_col_uv]], uvpar$Month, sep = "_")
+  key_d  <- paste(Dpar[[tag_col_d]], Dpar$Month, sep = "_")
+
+  m <- match(key_uv, key_d)
+  matched <- !is.na(m)
+  if (any(matched)) {
+    uvpar$D[matched] <- Dpar$D[m[matched]]
+    uvpar$nrec[matched] <- Dpar$nrec[m[matched]]
   }
+
+  calc_month_stats <- function(df) {
+    df |>
+      dplyr::group_by(Month) |>
+      dplyr::summarise(
+        u    = weighted.mean(u, nrec, na.rm = TRUE) * -1,
+        v    = weighted.mean(v, nrec, na.rm = TRUE),
+        D    = weighted.mean(D, nrec, na.rm = TRUE),
+        sd.u = sqrt(weighted.var(u, nrec, na.rm = TRUE)),
+        sd.v = sqrt(weighted.var(v, nrec, na.rm = TRUE)),
+        sd.D = sqrt(weighted.var(D, nrec, na.rm = TRUE)),
+        .groups = "drop"
+      ) |>
+      as.data.frame()
+  }
+
   if (!is.null(track)) {
-    tpar = subset(uvpar, tagid == track)
-    parmean1 = data.frame(
-      Month = as.numeric(levels(as.factor(tpar$Month))),
-      u = daply(
-        tpar, .variables = c("Month"), .fun = function(x)
-          weighted.mean(x$u,
-                        x$nrec, na.rm = T)
-      ) * -1, v = daply(
-        tpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.mean(x$v, x$nrec,
-                        na.rm = T)
-      ), D = daply(
-        tpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.mean(x$D, x$nrec,
-                        na.rm = T)
-      ), sd.u = sqrt(daply(
-        tpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.var(x$u, x$nrec,
-                       na.rm = T)
-      )), sd.v = sqrt(daply(
-        tpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.var(x$v, x$nrec,
-                       na.rm = T)
-      )), sd.D = sqrt(daply(
-        tpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.var(x$D, x$nrec,
-                       na.rm = T)
-      ))
-    )
+    tpar <- uvpar[uvpar[[tag_col_uv]] == track, , drop = FALSE]
+    parmean1 <- calc_month_stats(tpar)
   }
+
   if (return.mean) {
-    parmean2 = data.frame(
-      Month = as.numeric(levels(as.factor(uvpar$Month))),
-      u = daply(
-        uvpar, .variables = c("Month"), .fun = function(x)
-          weighted.mean(x$u,
-                        x$nrec, na.rm = T)
-      ) * -1, v = daply(
-        uvpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.mean(x$v, x$nrec,
-                        na.rm = T)
-      ), D = daply(
-        uvpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.mean(x$D, x$nrec,
-                        na.rm = T)
-      ), sd.u = sqrt(daply(
-        uvpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.var(x$u, x$nrec,
-                       na.rm = T)
-      )), sd.v = sqrt(daply(
-        uvpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.var(x$v, x$nrec,
-                       na.rm = T)
-      )), sd.D = sqrt(daply(
-        uvpar, .variables = c("Month"),
-        .fun = function(x)
-          weighted.var(x$D, x$nrec,
-                       na.rm = T)
-      ))
-    )
+    parmean2 <- calc_month_stats(uvpar)
+
     if (!is.null(track)) {
-      tpar.merge = merge(parmean1, parmean2, by = "Month",
-                         all = T)
-      nidx = is.na(tpar.merge[, 2])
-      tpar.merge[nidx, 2:4] = tpar.merge[nidx, 8:10]
-      tpar.merge[, 5:7] = tpar.merge[, 11:13]
-      tparmean = data.frame(tpar.merge[, 1:7], global.value = as.logical(nidx))
-      parnames = c("Month", "u", "v", "D", "sd.u", "sd.v",
-                   "sd.D", "global")
-      names(tparmean) = parnames
-      tparmean
+      tpar.merge <- merge(parmean1, parmean2, by = "Month", all = TRUE)
+      nidx <- is.na(tpar.merge[, 2])
+      tpar.merge[nidx, 2:4] <- tpar.merge[nidx, 8:10]
+      tpar.merge[, 5:7] <- tpar.merge[, 11:13]
+      tparmean <- data.frame(tpar.merge[, 1:7], global.value = as.logical(nidx))
+      names(tparmean) <- c("Month", "u", "v", "D", "sd.u", "sd.v", "sd.D", "global")
+      return(tparmean)
+    } else {
+      return(parmean2)
     }
-    else {
-      parmean2
-    }
-  }
-  else {
-    uvpar$u = uvpar$u * -1
-    uvpar
+  } else {
+    uvpar$u <- uvpar$u * -1
+    return(uvpar)
   }
 }

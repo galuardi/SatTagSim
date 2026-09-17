@@ -13,51 +13,47 @@
 #' @examples
 #' see vignette
 
-get.trans.prob <-  function (datbox, nyears = 100, adims = c(7, 7, 4), perc = T, ...)
-{
+get.trans.prob <- function(datbox, nyears = 100, adims = c(7, 7, 4), perc = TRUE, ...) {
+  dname3 <- if (adims[3] == 4) c("Winter", "Spring", "Summer", "Fall") else as.character(seq_len(adims[3]))
 
-  fillone <- function(trans)
-  {
-    n = nrow(trans)
-    for(i in 1:n){
-      trans[i,i] = ifelse(sum(trans[i,])==0, 1, trans[i,i])
+  allmat <- array(
+    0,
+    dim = adims,
+    dimnames = list(as.character(seq_len(adims[1])), as.character(seq_len(adims[2])), dname3)
+  )
+
+  tab <- table(datbox$pbox, datbox$cbox, datbox$season)
+  n_seas <- dim(allmat)[3]
+
+  for (i in seq_len(min(n_seas, dim(tab)[3]))) {
+    r_match <- match(rownames(tab[, , i]), dimnames(allmat)[[1]])
+    c_match <- match(colnames(tab[, , i]), dimnames(allmat)[[2]])
+    valid_r <- !is.na(r_match)
+    valid_c <- !is.na(c_match)
+    allmat[r_match[valid_r], c_match[valid_c], i] <- tab[valid_r, valid_c, i]
+  }
+
+  fillone <- function(trans) {
+    zero_rows <- which(rowSums(trans) == 0)
+    if (length(zero_rows) > 0) {
+      diag(trans)[zero_rows] <- 1
     }
     trans
   }
 
-  if(adims[3] == 4) {
-    dname3 =  c("Winter", "Spring", "Summer", "Fall")
-  }else {
-    dname3 = as.character(adims[3])
-  }
+  tmat <- vector("list", n_seas)
+  names(tmat) <- dname3
 
-  allmat = array(
-    0, dim = c(adims), dimnames = list(
-      as.character(1:adims[1])
-    , as.character(1:adims[2])
-    , dname3
-    )
-  )
-
-
-  tab = table(datbox$pbox, datbox$cbox, datbox$season)
-
-  for(i in 1:dim(allmat)[3]){
-    ridx = match(dimnames(tab[,,i])[[1]], dimnames(allmat[,,i])[[1]])
-    cidx = match(dimnames(tab[,,i])[[2]], dimnames(allmat[,,i])[[2]])
-    allmat[ridx, cidx, i] = tab[,,i]
-  }
-
-  mmat = allmat
-
-  if(perc==F){
-    tmat = alply(mmat, 3, function(x) x)
-  }else{
-    tmat = alply(mmat, 3, function(x) x / rowSums(x))
-    for (i in 1:4){
-      tmat[[i]][is.nan(tmat[[i]])] = 0
+  for (i in seq_len(n_seas)) {
+    mat_i <- allmat[, , i]
+    if (perc) {
+      r_sums <- rowSums(mat_i)
+      mat_i <- mat_i / r_sums
+      mat_i[is.nan(mat_i)] <- 0
+      mat_i <- fillone(mat_i)
     }
-    tmat = lapply(tmat, fillone)
+    tmat[[i]] <- mat_i
   }
+
   tmat
 }

@@ -17,9 +17,6 @@ modern_process_tracks(
   fillvec = NULL
 )
 }
-\arguments{
-\item{fillvec}{}
-}
 \description{
 Get parameters modern method
 alternate way of getting movement parameters 

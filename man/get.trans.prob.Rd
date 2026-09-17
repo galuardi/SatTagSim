@@ -4,7 +4,7 @@
 \alias{get.trans.prob}
 \title{Transition probability matrix generator}
 \usage{
-get.trans.prob(datbox, nyears = 100, adims = c(7, 7, 4), perc = T, ...)
+get.trans.prob(datbox, nyears = 100, adims = c(7, 7, 4), perc = TRUE, ...)
 }
 \arguments{
 \item{datbox}{data frame returned from \code{\link{get.first.box}}}

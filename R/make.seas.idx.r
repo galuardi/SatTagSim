@@ -7,17 +7,12 @@
 #' @details btracks must have a 'Month' column
 #' @examples
 #' see vignette
-make.seas.idx <- function (btracks)
-{
-  winidx = btracks$Month == 1 | btracks$Month == 2 | btracks$Month ==
-    3
-  spridx = btracks$Month == 4 | btracks$Month == 5 | btracks$Month ==
-    6
-  sumidx = btracks$Month == 7 | btracks$Month == 8 | btracks$Month ==
-    9
-  fallidx = btracks$Month == 10 | btracks$Month == 11 | btracks$Month ==
-    12
-  seasidx = list(winter = winidx, spring = spridx, summer = sumidx,
-                 fall = fallidx)
-  seasidx
+make.seas.idx <- function(btracks) {
+  m <- as.numeric(btracks$Month)
+  list(
+    winter = m %in% 1:3,
+    spring = m %in% 4:6,
+    summer = m %in% 7:9,
+    fall   = m %in% 10:12
+  )
 }
