@@ -45,7 +45,6 @@ library(rworldmap)
 library(rworldxtra)
 library(tidyverse)
 library(sf)
-library(raster)
 data(box7)
 data(box11)
 data(rmask)
@@ -119,26 +118,24 @@ nsfish %>%
 ```{r plot_tags_raster, fig.width  =  8, fig.height  =  6, caption  =  'Nova Scotia bluefin tracks plotted as a rasterized grid. Cells are summed location frequency.'}
 
 make.tag.raster  <- function(simdat, xmn  =  -100, xmx  =  30, ymn  =  0, ymx  =  60, boxsize =  60){
+  # require(raster)
+  # if(class(simdat)=="SpatialPointsDataFrame"){
+  #     simdat  =  as.data.frame(simdat)
+  #       coordinates(simdat)  =  ~Longitude+Latitude
+  # }
   r  =  raster(nrow = (ymx-ymn)*60/boxsize, ncol =  (xmx-xmn)*60/boxsize, xmn  =  xmn, xmx  =  xmx, ymn  =  ymn, ymx  =  ymx)
   
-  if (inherits(simdat, "sf")) {
-    coords <- sf::st_coordinates(simdat)
-    simdat <- sf::st_drop_geometry(simdat)
-    simdat$Longitude <- coords[, 1]
-    simdat$Latitude <- coords[, 2]
-  }
   simdat$CID  =  1
-  sp::coordinates(simdat)  =  ~Longitude+Latitude
 
   sr  =  rasterize(simdat, r, field  =  'CID', fun = 'count') #[[1]]
   return(sr)
 }
 
 ras2df = function(r){
-  rpts  =  raster::coordinates(r)
+  rpts  =  coordinates(r)
   rpts = rpts %>%
     as_tibble() %>%
-    mutate(val = as.vector(raster::values(r)))
+    mutate(val = as.vector(values(r)))
   rpts
 }
 
