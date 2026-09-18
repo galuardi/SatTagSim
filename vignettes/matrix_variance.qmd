@@ -1,0 +1,225 @@
+---
+title: "Movement matrix goodness of fit"
+author: "Benjamin Galuardi"
+date: today
+format:
+  html:
+    toc: true
+    embed-resources: true
+    code-fold: show
+execute:
+  echo: true
+  warning: false
+  message: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+#| echo: true
+#| eval: true
+library(SatTagSim)
+library(knitr)
+library(truncnorm)
+library(fields)
+
+data(sim_example)
+data(box7)
+
+mycol = colorRampPalette(c("lightcyan", "royalblue", "blue", "lemonchiffon", "orange", "red"), space = "Lab")
+```
+
+#### Generate seasonal transition matrices
+
+Using the pre-simulated dataset (`simdat`) and the 7-box spatial stratification (`box7`):
+
+```{r}
+#| label: get_trans_prob
+#| echo: true
+#| eval: true
+datbox <- get.first.box(simdat, 1000, box7, seas.len = 24)
+trans.ct <- get.trans.prob(datbox, nyears = 50, adims = c(7, 7, 4), perc = FALSE)
+trans <- get.trans.prob(datbox, nyears = 50, adims = c(7, 7, 4), perc = TRUE)
+seasons <- c("Winter", "Spring", "Summer", "Fall")
+names(trans.ct) <- names(trans) <- seasons
+```
+
+### Functions for multinomial variance
+
+The expected number of times outcome $i$ is observed over $n$ trials is:
+\begin{equation}
+{\displaystyle \operatorname {E} (X_{i})=np_{i}\,} 
+\end{equation}
+
+\begin{equation}
+\operatorname{v}(X_i) = np_i(1-p_i)
+\end{equation}
+
+where $n$ is the number of trials and $p$ is the probability. Here, each row of a movement matrix is considered a multinomial.
+
+```{r}
+#| label: multinomial_variance
+#| echo: true
+#| eval: true
+# function to calculate variance of a multinomial row
+get.mvar <- function(x){
+  p <- drop(x) # use percentages
+  p * (1 - p)
+}
+
+# function to sample from a posterior multinomial distribution
+get.mvar.samp <- function(vmu, vsd) {
+  o <- truncnorm::rtruncnorm(1, mean = vmu, sd = sqrt(vsd), a = 0, b = 1)
+  o[is.nan(o)] <- 0
+  o
+}
+
+# calculate variance matrices across seasons
+vmat <- lapply(trans, function(x) apply(x, 1, get.mvar))
+```
+
+```{r}
+#| label: vmattab
+#| echo: true
+#| eval: true
+kable(vmat[[1]], col.names = 1:7, caption = "Multinomial variance for Winter", digits = 4)
+```
+
+{{< pagebreak >}}
+
+## Plot the variance for each cell, each season
+### Overlay with original movement matrix values
+
+```{r}
+#| label: plot_variance
+#| echo: true
+#| eval: true
+#| fig-width: 9
+#| fig-height: 9
+#| results: hide
+ex7 <- expand.grid(1:7, 1:7)
+
+par(mfrow = c(2, 2))
+sapply(1:4, function(x) {
+  fields::image.plot(1:7, 1:7, vmat[[x]], col = mycol(49), xlab = '', ylab = '')
+  text(ex7[, 1], ex7[, 2], round(as.vector(trans[[x]]), 3), font = 2)
+  title(names(trans)[x])
+})
+```
+
+----
+
+{{< pagebreak >}}
+
+## Sample from posterior
+```{r}
+#| label: sample_posterior
+#| echo: true
+#| eval: true
+samp <- data.frame(sapply(1:7, function(x) get.mvar.samp(trans[[1]][x, ], vmat[[1]][x, ])))
+names(samp) <- 1:7
+rownames(samp) <- 1:7
+kable(samp, caption = 'Posterior sample: Winter season', digits = 4)
+```
+
+----
+
+{{< pagebreak >}}
+
+## Goodness of Fit
+
+### Functions to compare pairs of rows using log-linear models and $\chi^2$ test
+
+$\chi^{2}$ multinomial goodness of fit:
+
+\begin{equation}
+{\displaystyle \operatorname {\chi^{2}} = \sum_{i} \frac{(f_{i}-e_{i})^2}{e_{i}}\,} 
+\end{equation}
+
+```{r}
+#| label: gof_functions
+#| echo: true
+#| eval: true
+# first argument is counts, second argument is probability.
+# Row-wise comparisons of two matrices: p-values of log-linear (chisq test) are returned
+
+get.loglin <- function(mat1, mat2){
+  fm <- list()
+  for(i in 1:nrow(mat1)){
+    fm[[i]] <- loglin(rbind(mat1[i, ], mat2[i, ] + 1e-30), c(1), print = FALSE, fit = FALSE)
+  }
+  unlist(lapply(fm, function(x) 1 - pchisq(x$lrt, x$df)))
+}
+
+get.mgof <- function(mat1, mat2){
+  fm <- numeric(nrow(mat1))
+  for(i in 1:nrow(mat1)){
+    if (sum(mat1[i, ]) == 0) {
+      fm[i] <- NA
+    } else {
+      p <- mat2[i, ] + 1e-30
+      p <- p / sum(p)
+      fm[i] <- suppressWarnings(chisq.test(mat1[i, ], p = p)$p.value)
+    }
+  }
+  fm
+}
+```
+
+Since each row of the movement matrix depends on its associated region in the previous time step, each row is evaluated as its own 1-dimensional contingency table.
+
+{{< pagebreak >}}
+
+### Compare between seasons (e.g. Winter vs Spring)
+
+```{r}
+#| label: compare_seasons
+#| echo: true
+#| eval: true
+bw.bs <- get.mgof(trans.ct[[1]], trans[[2]])
+print(bw.bs)
+```
+
+### Compare consecutive seasons
+
+```{r}
+#| label: compare_consecutive_seasons
+#| echo: true
+#| eval: true
+seas_comp <- data.frame(
+  "Winter_vs_Spring" = get.mgof(trans.ct[[1]], trans[[2]]),
+  "Spring_vs_Summer" = get.mgof(trans.ct[[2]], trans[[3]]),
+  "Summer_vs_Fall"   = get.mgof(trans.ct[[3]], trans[[4]]),
+  "Fall_vs_Winter"   = get.mgof(trans.ct[[4]], trans[[1]])
+)
+rownames(seas_comp) <- 1:7
+kable(seas_comp, caption = "Multinomial goodness of fit (p-values) between consecutive seasons", digits = 4)
+```
+
+{{< pagebreak >}}
+
+### Overall transition rate across 4 seasons
+
+```{r}
+#| label: annual_transition
+#| echo: true
+#| eval: true
+# annual transition rate obtained by multiplying seasonal matrices
+ball <- trans[[1]] %*% trans[[2]] %*% trans[[3]] %*% trans[[4]]
+round(ball, 3)
+```
+
+----
+
+{{< pagebreak >}}
+
+### Tradeoff between degrees of freedom and likelihood ratio within the $\chi^{2}$ test
+
+```{r}
+#| label: pchisq_plot
+#| echo: true
+#| eval: true
+plot(pchisq(rep(50, 100), df = 1:100), typ = 'l', lwd = 2, col = 4, xlab = 'DF', ylab = 'Value')
+title('pchisq value')
+```
