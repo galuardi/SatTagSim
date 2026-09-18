@@ -830,6 +830,8 @@ For expediency, this vignette loads a sample simulation
 #| eval: false
 #| echo: true
 
+library(doParallel)
+
 mcoptions  =  setup.parallel()
 
 #---------------------------------------------------------------#
@@ -966,7 +968,7 @@ simdatdf$seas[simdatdf$Month%in%c(7,8,9)]  =  3
 simdatdf$seas[simdatdf$Month%in%c(10,11,12)]  =  4
 # rm(seasidx)
 
-names(simdatdf)[which(names(simdatdf)%in%c('lon,','lat'))]  =  c('lon','lat')
+# names(simdatdf)[which(names(simdatdf)%in%c('lon,','lat'))]  =  c('lon','lat')
 
 #---------------------------------------------------------------#
 # Make Rasters of Results
