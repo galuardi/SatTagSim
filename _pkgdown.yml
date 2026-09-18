@@ -70,7 +70,6 @@ reference:
       - myramps
       - rmask
       - woasst
-      - WOASST
 
   - title: "Package Overview"
     desc: "General package description and index."
