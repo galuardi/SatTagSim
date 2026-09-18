@@ -8,6 +8,8 @@ Maintainer: <drdrumfish@gmail.com>
 Description: Simulation from Kalman filtered electronic tag results to produce
     transition matrices between discrete spatial areas.
 License: GPL-3
+URL: https://galuardi.github.io/SatTagSim/, https://github.com/galuardi/SatTagSim
+BugReports: https://github.com/galuardi/SatTagSim/issues
 Depends:
     R (>= 4.1.0)
 Imports:

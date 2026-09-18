@@ -1,0 +1,79 @@
+url: https://galuardi.github.io/SatTagSim/
+
+template:
+  bootstrap: 5
+  bootswatch: cosmo
+
+home:
+  title: "SatTagSim: Simulation from Electronic Tags"
+  description: "Spatial and temporally explicit simulation of marine animal movement from electronic tagging data to produce population-level transition matrices."
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [github]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: "Simulation Workflow (Nova Scotia BFT)"
+          href: articles/sim_ns.html
+        - text: "Movement Matrix Goodness of Fit"
+          href: articles/matrix_variance.html
+
+reference:
+  - title: "Simulation Routines"
+    desc: "Generate advection-diffusion movement tracks constrained by environmental masks."
+    contents:
+      - sim_tracks_par
+      - make.sim.track.par2
+      - make.sim.track.par
+      - simm.kf
+      - setup.parallel
+
+  - title: "Parameter Processing"
+    desc: "Extract and assemble advection (u, v), diffusion (D), and seasonal parameter arrays."
+    contents:
+      - modern_process_tracks
+      - make.par.array
+      - get.allpar
+      - get.uv
+      - get.kfD
+      - merge.par
+      - rmask2array
+
+  - title: "Spatial Transitions & Markov Chains"
+    desc: "Map tracks to spatial strata and calculate discrete seasonal transition matrices."
+    contents:
+      - get.first.box
+      - get_first_box_mod
+      - get.trans.prob
+      - make.markov.chain
+      - get.start.pts
+      - make.sim.raster
+      - make.rasbox
+      - get.box.vals
+      - make.seas.idx
+
+  - title: "Visualization"
+    desc: "Plotting functions for transition matrices, parameter densities, and seasonal changes."
+    contents:
+      - plot.boxtrans
+      - plot.uv.density
+      - plot.seas.change
+      - col2cpt
+
+  - title: "Package Datasets"
+    desc: "Built-in datasets and spatial layers."
+    contents:
+      - bath
+      - myramps
+      - rmask
+      - woasst
+      - WOASST
+
+  - title: "Package Overview"
+    desc: "General package description and index."
+    contents:
+      - SatTagSim-package
+

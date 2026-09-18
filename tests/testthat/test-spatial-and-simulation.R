@@ -36,8 +36,8 @@ test_that("get.box.vals assigns points to spatial polygons correctly", {
 })
 
 test_that("get.first.box processes track list and transitions correctly", {
-  data("sim_example", package = "SatTagSim")
-  data("box7", package = "SatTagSim")
+  data("sim_example", envir = environment())
+  data("box7", envir = environment())
 
   res <- get.first.box(simdat[1:2], syear = 2000, boxes = box7, seas.len = 90)
   expect_s3_class(res, "data.frame")
@@ -49,8 +49,8 @@ test_that("get.first.box processes track list and transitions correctly", {
 })
 
 test_that("get.trans.prob and make.markov.chain compute transitions and state sequence", {
-  data("sim_example", package = "SatTagSim")
-  data("box7", package = "SatTagSim")
+  data("sim_example", envir = environment())
+  data("box7", envir = environment())
 
   fbox <- get.first.box(simdat[1:3], syear = 2000, boxes = box7, seas.len = 90)
   tmat <- get.trans.prob(fbox, nyears = 1, adims = c(7, 7, 4), perc = TRUE)
