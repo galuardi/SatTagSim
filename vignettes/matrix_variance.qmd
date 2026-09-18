@@ -163,7 +163,7 @@ get.mgof <- function(mat1, mat2){
       fm[i] <- suppressWarnings(chisq.test(mat1[i, ], p = p)$p.value)
     }
   }
-  fm
+ fm
 }
 ```
 
