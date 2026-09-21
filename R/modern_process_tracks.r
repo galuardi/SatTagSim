@@ -124,10 +124,18 @@ modern_process_tracks <- function(tracks, inbox, rasbox = NULL,
       dbox[missvec[i], ]    <- dbox[fillvec[i], ]
       dbox_sd[missvec[i], ] <- dbox_sd[fillvec[i], ]
     }
-    for (i in 1:ncol(u2_sd)) u2_sd[is.na(u2_sd[, i]), i] <- sd(u2_sd[, i], na.rm = TRUE)
-    for (i in 1:ncol(v2_sd)) v2_sd[is.na(v2_sd[, i]), i] <- sd(v2_sd[, i], na.rm = TRUE)
-    dbox_sd[is.na(dbox_sd)] <- 0
   }
+
+  global_u_sd <- mean(uv_summary$u_sd[uv_summary$u_sd > 0], na.rm = TRUE)
+  if (is.na(global_u_sd) || global_u_sd <= 0) global_u_sd <- 1
+  global_v_sd <- mean(uv_summary$v_sd[uv_summary$v_sd > 0], na.rm = TRUE)
+  if (is.na(global_v_sd) || global_v_sd <= 0) global_v_sd <- 1
+  global_D_sd <- mean(d_summary$D_sd[d_summary$D_sd > 0], na.rm = TRUE)
+  if (is.na(global_D_sd) || global_D_sd <= 0) global_D_sd <- 10
+
+  u2_sd[is.na(u2_sd) | u2_sd <= 0] <- global_u_sd
+  v2_sd[is.na(v2_sd) | v2_sd <= 0] <- global_v_sd
+  dbox_sd[is.na(dbox_sd) | dbox_sd <= 0] <- global_D_sd
   
   if (!is.null(use_wts)) {
     tagwts <- tracksdf %>%

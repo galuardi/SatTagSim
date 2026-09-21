@@ -149,9 +149,9 @@ if (is.na(tbox)) {
             usd = c(par_array[pbidx, seas, 4])
             vsd = c(par_array[pbidx, seas, 5])
             Dsd = c(par_array[pbidx, seas, 6])
-            u = c(u, usd)
-            v = c(v, vsd)
-            D = c(D, Dsd)
+            u = c(u, max(1e-3, usd, na.rm = TRUE))
+            v = c(v, max(1e-3, vsd, na.rm = TRUE))
+            D = c(D, max(1e-3, Dsd, na.rm = TRUE))
             Dorig = D
             uorig = u
             vorig = v
@@ -162,16 +162,23 @@ if (is.na(tbox)) {
         t1 = SatTagSim::simm.kf(2, u, v, D, msp, ulim, vlim, Dlim)[2, ]
         
         # --- NEW: THE INVISIBLE WALL REFLECTION ---
-        # 1. Check if the proposed t1 lands off the map or in a missing parameter box
-        check_xidx = which.min((t1[1] - boxmat$lon)^2)
-        check_yidx = which.min((t1[2] - boxmat$lat)^2)
-        check_tbox = boxmat$box[check_xidx, check_yidx]
-        
-        hit_wall <- is.na(check_tbox)
-        if (!hit_wall) {
-            check_pbidx = which(parbox == check_tbox)
-            if (length(check_pbidx) == 0 || is.na(par_array[check_pbidx, seas, 1])) {
-                hit_wall <- TRUE
+        # 1. Check if proposed t1 is NA, lands off map, or in a missing parameter box
+        in_bounds <- !any(is.na(t1)) &&
+                     t1[1] >= min(boxmat$lon) && t1[1] <= max(boxmat$lon) &&
+                     t1[2] >= min(boxmat$lat) && t1[2] <= max(boxmat$lat)
+
+        if (!in_bounds) {
+            hit_wall <- TRUE
+        } else {
+            check_xidx = which.min((t1[1] - boxmat$lon)^2)
+            check_yidx = which.min((t1[2] - boxmat$lat)^2)
+            check_tbox = boxmat$box[check_xidx, check_yidx]
+            hit_wall <- length(check_tbox) == 0 || is.na(check_tbox)
+            if (!hit_wall) {
+                check_pbidx = which(parbox == check_tbox)
+                if (length(check_pbidx) == 0 || is.na(par_array[check_pbidx, seas, 1])) {
+                    hit_wall <- TRUE
+                }
             }
         }
         
